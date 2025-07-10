@@ -1,15 +1,28 @@
-# TDD Sample Project
+# Claude Code Actions TDD Sample Project
 
-Test-Driven Development (TDD) のサンプルプロジェクトです。GitHub Actionsを使用してCI/CDパイプラインでTDDワークフローを体験できます。
+**Claude Code Actionsを活用したテスト駆動開発（TDD）の完全実装プロジェクト**
 
-## 🚀 プロジェクト概要
+このプロジェクトは、GitHubのIssues・Pull Requests・Actionsと連携して、AIによる自動コード生成・テスト実行・コードレビュー・リファクタリングを実現し、真のTDD開発を体験できるサンプルプロジェクトです。
 
-このプロジェクトは以下を実装しています：
+## 🎯 プロジェクトの特徴
 
-- **Calculator クラス**: 基本的な数学演算
-- **StringUtils クラス**: 文字列操作ユーティリティ
-- **包括的なテストスイート**: Jest を使用
-- **GitHub Actions**: TDDサイクルを可視化するワークフロー
+### 🤖 Claude Code Actions統合
+- **自動コード生成**: GitHub Issueでの指示により自動的にクラス・メソッドを生成
+- **自動テスト実行**: TDDサイクル（Red-Green-Refactor）の完全自動化
+- **自動コードレビュー**: セキュリティ・パフォーマンス・品質の包括的分析
+- **自動リファクタリング**: コード品質向上の自動実行
+
+### 📊 完全なTDD実現
+- **🔴 REDフェーズ**: 失敗するテストの自動作成
+- **🟢 GREENフェーズ**: 最小実装でのテスト成功
+- **🔵 REFACTORフェーズ**: コード品質の自動改善
+- **100%カバレッジ**: 全コードのテスト網羅
+
+### 🔧 実装済み機能
+- **Calculator クラス**: 数学演算（add, subtract, multiply, divide, power, factorial）
+- **StringUtils クラス**: 文字列操作（reverse, isPalindrome, capitalize, wordCount）
+- **包括的テストスイート**: Jest + ES6 Modules対応
+- **GitHub Actions**: Claude Universal Actions統合ワークフロー
 
 ## 📋 TDD サイクル
 
@@ -41,6 +54,45 @@ npm run test:coverage
 npm run lint
 ```
 
+## 🚀 Claude Code Actions使用方法
+
+### 基本的な使い方
+
+#### 1. テスト実行
+```markdown
+タイトル: [CLAUDE] テスト実行
+本文: 全テストとカバレッジレポートを実行してください
+```
+
+#### 2. コードレビュー
+```markdown
+タイトル: [CLAUDE] コードレビュー  
+本文: セキュリティとパフォーマンスの観点でプロジェクト全体をレビューしてください
+```
+
+#### 3. 新機能追加（TDDサイクル）
+```markdown
+タイトル: [CLAUDE] TDD新機能実装
+本文:
+ArrayUtilsクラスを以下の仕様でTDD実装してください：
+- unique(array): 重複要素除去
+- sum(array): 配列要素合計
+- average(array): 平均値計算
+
+TDDサイクル（Red→Green→Refactor）で実装してください。
+```
+
+#### 4. リファクタリング
+```markdown
+タイトル: [REFACTOR] コード改善
+本文: 重複コードを削除してパフォーマンスを最適化してください
+```
+
+### 詳細ガイド
+- 📖 [Claude Code Actions完全ガイド](docs/claude-code-actions-complete-guide.md)
+- 🔄 [TDD実現ガイド](docs/tdd-with-claude-guide.md)  
+- 🔗 [GitHub統合ガイド](docs/github-integration-guide.md)
+
 ## 📁 プロジェクト構造
 
 ```
@@ -48,14 +100,21 @@ tdd-sample-project/
 ├── src/
 │   ├── calculator.js      # Calculator クラス
 │   ├── stringUtils.js     # StringUtils クラス
-│   └── index.js          # メインアプリケーション
+│   └── index.js           # デモ実行ファイル
 ├── tests/
 │   ├── calculator.test.js # Calculator のテスト
-│   └── stringUtils.test.js # StringUtils のテスト
+│   ├── stringUtils.test.js # StringUtils のテスト
+│   └── index.test.js      # index.js のテスト
 ├── .github/
 │   └── workflows/
-│       ├── ci.yml         # 基本的なCI
-│       └── tdd-demo.yml   # TDDワークフローデモ
+│       ├── ci.yml             # 基本的なCI/CD
+│       └── claude-universal.yml # Claude Code Actions統合
+├── docs/
+│   ├── claude-code-actions-complete-guide.md # Claude Actions完全ガイド
+│   ├── tdd-with-claude-guide.md              # TDD実現ガイド
+│   ├── github-integration-guide.md           # GitHub統合ガイド
+│   ├── claude-universal-guide.md             # Universal Actions詳細
+│   └── refactoring-guide.md                  # リファクタリングガイド
 ├── package.json
 ├── eslint.config.js
 └── README.md
