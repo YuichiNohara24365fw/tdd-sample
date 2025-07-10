@@ -11,6 +11,7 @@ permissions:
   pull-requests: write
   issues: write
   actions: read
+  id-token: write
 
 jobs:
   claude-code:
@@ -42,8 +43,8 @@ jobs:
         # タイムアウト設定（Max plan なので長時間処理可能）
         timeout_minutes: "60"
         
-        # プロジェクト固有の指示
-        system_instructions: |
+        # プロジェクト固有の指示（正しいパラメータ名）
+        custom_instructions: |
           You are working on a Node.js TDD project with:
           - ES6 modules
           - Jest testing framework  
@@ -63,11 +64,6 @@ jobs:
           - tests/ - test files
           - Use ESM imports/exports
           
-        # 環境変数
-        env_vars: |
+        # 環境変数（正しいパラメータ名）
+        claude_env: |
           NODE_ENV=test
-          
-        # 追加設定
-        create_pr_on_code_changes: true
-        auto_commit: true
-        include_pr_summary: true
