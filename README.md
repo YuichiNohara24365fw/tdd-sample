@@ -1,0 +1,211 @@
+# TDD Sample Project
+
+Test-Driven Development (TDD) のサンプルプロジェクトです。GitHub Actionsを使用してCI/CDパイプラインでTDDワークフローを体験できます。
+
+## 🚀 プロジェクト概要
+
+このプロジェクトは以下を実装しています：
+
+- **Calculator クラス**: 基本的な数学演算
+- **StringUtils クラス**: 文字列操作ユーティリティ
+- **包括的なテストスイート**: Jest を使用
+- **GitHub Actions**: TDDサイクルを可視化するワークフロー
+
+## 📋 TDD サイクル
+
+このプロジェクトは以下のTDDサイクルを実装しています：
+
+1. **🔴 RED**: 失敗するテストを書く
+2. **🟢 GREEN**: テストが通る最小限のコードを書く  
+3. **🔵 REFACTOR**: コードをリファクタリングして改善
+
+## 🛠️ セットアップ
+
+```bash
+# 依存関係をインストール
+npm install
+
+# アプリケーションを実行
+npm start
+
+# テストを実行
+npm test
+
+# テストをウォッチモードで実行
+npm run test:watch
+
+# カバレッジ付きでテストを実行
+npm run test:coverage
+
+# リンターを実行
+npm run lint
+```
+
+## 📁 プロジェクト構造
+
+```
+tdd-sample-project/
+├── src/
+│   ├── calculator.js      # Calculator クラス
+│   ├── stringUtils.js     # StringUtils クラス
+│   └── index.js          # メインアプリケーション
+├── tests/
+│   ├── calculator.test.js # Calculator のテスト
+│   └── stringUtils.test.js # StringUtils のテスト
+├── .github/
+│   └── workflows/
+│       ├── ci.yml         # 基本的なCI
+│       └── tdd-demo.yml   # TDDワークフローデモ
+├── package.json
+├── eslint.config.js
+└── README.md
+```
+
+## 🧪 テスト例
+
+### Calculator クラス
+
+```javascript
+// 基本演算のテスト
+expect(calculator.add(2, 3)).toBe(5);
+expect(calculator.divide(10, 2)).toBe(5);
+expect(() => calculator.divide(5, 0)).toThrow('Division by zero is not allowed');
+```
+
+### StringUtils クラス
+
+```javascript
+// 文字列操作のテスト
+expect(StringUtils.reverse('hello')).toBe('olleh');
+expect(StringUtils.isPalindrome('racecar')).toBe(true);
+expect(StringUtils.wordCount('hello world')).toBe(2);
+```
+
+## 🚀 GitHub Actions ワークフロー
+
+### CI ワークフロー (`ci.yml`)
+
+- Node.js 18.x と 20.x でテスト
+- リンター実行
+- テストカバレッジ収集
+- Codecov連携（オプション）
+
+### TDD デモワークフロー (`tdd-demo.yml`)
+
+TDDの3つのフェーズを視覚化：
+
+1. **🔴 RED Phase**: テストが失敗することを確認
+2. **🟢 GREEN Phase**: すべてのテストが通ることを確認  
+3. **🔵 REFACTOR Phase**: コード品質チェックと最適化
+
+## 🎯 使用方法
+
+### 基本的な使用
+1. このリポジトリをGitHubにpush
+2. GitHub Actionsが自動的に実行される
+3. ワークフローページでTDDサイクルを確認
+4. 手動でワークフローをトリガーすることも可能
+
+### Claude Code Actions での使用
+
+このプロジェクトはClaude Code Actionsでの使用に最適化されています：
+
+#### 基本的なテスト実行
+```
+プロジェクトの全テストを実行して結果を報告してください
+```
+
+#### TDD サイクル実行
+```
+新機能「平方根計算」をCalculatorクラスに追加してください。
+TDDサイクル（Red → Green → Refactor）に従って実装してください。
+```
+
+#### 特定のフェーズ実行
+```
+REDフェーズ: まず失敗するテストを書いてください
+GREENフェーズ: テストが通るように実装してください  
+REFACTORフェーズ: コードの品質を改善してください
+```
+
+#### 利用可能なコマンド
+- `npm run tdd:red` - REDフェーズ実行
+- `npm run tdd:green` - GREENフェーズ実行
+- `npm run tdd:refactor` - REFACTORフェーズ実行
+- `npm run tdd:cycle` - 完全なTDDサイクル実行
+
+#### GitHub Actions手動実行
+- Actions タブ → "Claude Code Actions TDD Support" ワークフロー
+- "Run workflow" で手動実行可能
+- アクションタイプを選択（test, tdd-red, tdd-green, etc.）
+
+## 📈 カバレッジ
+
+テストカバレッジは `npm run test:coverage` で確認できます。カバレッジレポートは `coverage/` ディレクトリに生成されます。
+
+## 🔧 開発のヒント
+
+- **テストファースト**: 新機能を追加する前に必ずテストを書く
+- **小さなステップ**: 一度に一つの機能に集中
+- **リファクタリング**: テストが通った後にコードを改善
+- **継続的インテグレーション**: すべての変更でテストを実行
+
+## 📚 TDD について
+
+Test-Driven Development (TDD) は以下の利点があります：
+
+- **コード品質の向上**: テストによって設計が改善される
+- **バグの早期発見**: 開発段階でバグを見つけられる
+- **リファクタリングの安全性**: テストがあることで安心してコードを変更できる
+- **仕様の明確化**: テストが仕様書の役割を果たす
+
+---
+
+## 📚 Claude Code Actions 指示例
+
+詳細な指示例は `templates/claude-instructions.md` を参照してください。
+
+### 一般的な指示例
+
+#### 新機能追加
+```
+Calculatorクラスに平方根計算機能を追加してください。
+まずテストを書いて、その後実装してください。
+```
+
+#### バグ修正
+```
+division by zero のエラーハンドリングが正しく動作するかテストしてください
+```
+
+#### リファクタリング
+```
+重複したコードを削除して、保守性を向上させてください
+```
+
+#### テスト強化
+```
+エッジケースのテストを追加して、カバレッジを100%にしてください
+```
+
+## 🔧 高度な使用法
+
+### カスタムワークフロー
+GitHub Actionsで独自のTDDワークフローを作成可能
+
+### 複数言語対応
+TypeScript、Python、Javaなどに拡張可能
+
+### IDE統合
+VS Code、WebStormなどでの使用に最適化
+
+## 🤝 コントリビューション
+
+1. フォークしてブランチを作成
+2. TDDサイクルに従って開発
+3. テストが通ることを確認
+4. プルリクエストを作成
+
+## 📄 ライセンス
+
+MIT License

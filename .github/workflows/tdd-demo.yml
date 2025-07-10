@@ -1,0 +1,114 @@
+name: TDD Workflow Demo
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Type of test to run'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+        - all
+        - unit
+        - coverage
+
+jobs:
+  red-phase:
+    name: "🔴 RED Phase - Write Failing Tests"
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run tests (expecting some to fail in TDD red phase)
+      run: npm test || echo "Tests failed as expected in RED phase"
+      continue-on-error: true
+
+    - name: Display test results
+      run: echo "🔴 RED phase completed - some tests may fail by design"
+
+  green-phase:
+    name: "🟢 GREEN Phase - Make Tests Pass"
+    runs-on: ubuntu-latest
+    needs: red-phase
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run all tests
+      run: npm test
+
+    - name: Display success message
+      run: echo "🟢 GREEN phase completed - all tests should pass"
+
+  refactor-phase:
+    name: "🔵 BLUE Phase - Refactor & Quality Check"
+    runs-on: ubuntu-latest
+    needs: green-phase
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run linter
+      run: npm run lint
+
+    - name: Run tests with coverage
+      run: npm run test:coverage
+
+    - name: Check coverage threshold
+      run: |
+        echo "🔵 REFACTOR phase completed"
+        echo "✅ Code quality checks passed"
+        echo "✅ Test coverage analyzed"
+
+  tdd-summary:
+    name: "📊 TDD Cycle Summary"
+    runs-on: ubuntu-latest
+    needs: [red-phase, green-phase, refactor-phase]
+    
+    steps:
+    - name: TDD Cycle Complete
+      run: |
+        echo "🎉 TDD Cycle Completed Successfully!"
+        echo ""
+        echo "📋 Summary:"
+        echo "🔴 RED:     Write failing tests"
+        echo "🟢 GREEN:   Make tests pass"
+        echo "🔵 REFACTOR: Improve code quality"
+        echo ""
+        echo "✅ All phases completed successfully"

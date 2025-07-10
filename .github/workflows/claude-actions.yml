@@ -1,0 +1,91 @@
+name: Claude Code Actions TDD Support
+
+on:
+  workflow_dispatch:
+    inputs:
+      action_type:
+        description: 'TDD Action to perform'
+        required: true
+        default: 'test'
+        type: choice
+        options:
+        - test
+        - tdd-red
+        - tdd-green
+        - tdd-refactor
+        - tdd-cycle
+        - coverage
+        - lint
+      test_file:
+        description: 'Specific test file to run (optional)'
+        required: false
+        type: string
+
+jobs:
+  claude-action:
+    name: "🤖 Claude Code Action: ${{ github.event.inputs.action_type }}"
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run Test Action
+      if: github.event.inputs.action_type == 'test'
+      run: |
+        echo "🧪 Running all tests..."
+        if [ -n "${{ github.event.inputs.test_file }}" ]; then
+          npm run test:specific "${{ github.event.inputs.test_file }}"
+        else
+          npm test
+        fi
+
+    - name: Run TDD Red Phase
+      if: github.event.inputs.action_type == 'tdd-red'
+      run: |
+        echo "🔴 TDD RED Phase: Checking for failing tests..."
+        npm run tdd:red
+
+    - name: Run TDD Green Phase
+      if: github.event.inputs.action_type == 'tdd-green'
+      run: |
+        echo "🟢 TDD GREEN Phase: Making tests pass..."
+        npm run tdd:green
+
+    - name: Run TDD Refactor Phase
+      if: github.event.inputs.action_type == 'tdd-refactor'
+      run: |
+        echo "🔵 TDD REFACTOR Phase: Improving code quality..."
+        npm run tdd:refactor
+
+    - name: Run Complete TDD Cycle
+      if: github.event.inputs.action_type == 'tdd-cycle'
+      run: |
+        echo "🔄 Running complete TDD cycle..."
+        npm run tdd:cycle
+
+    - name: Run Coverage Analysis
+      if: github.event.inputs.action_type == 'coverage'
+      run: |
+        echo "📊 Analyzing test coverage..."
+        npm run test:coverage
+
+    - name: Run Lint Check
+      if: github.event.inputs.action_type == 'lint'
+      run: |
+        echo "🔍 Running lint checks..."
+        npm run lint
+
+    - name: Display Results
+      run: |
+        echo "✅ Claude Code Action completed: ${{ github.event.inputs.action_type }}"
+        echo "📝 Check the logs above for detailed results"
