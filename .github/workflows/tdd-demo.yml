@@ -33,7 +33,7 @@ jobs:
         cache: 'npm'
 
     - name: Install dependencies
-      run: npm ci
+      run: npm install
 
     - name: Run tests (expecting some to fail in TDD red phase)
       run: npm test || echo "Tests failed as expected in RED phase"
@@ -58,7 +58,7 @@ jobs:
         cache: 'npm'
 
     - name: Install dependencies
-      run: npm ci
+      run: npm install
 
     - name: Run all tests
       run: npm test
@@ -82,7 +82,7 @@ jobs:
         cache: 'npm'
 
     - name: Install dependencies
-      run: npm ci
+      run: npm install
 
     - name: Run linter
       run: npm run lint
