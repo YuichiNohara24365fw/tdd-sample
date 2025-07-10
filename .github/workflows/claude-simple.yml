@@ -40,28 +40,34 @@ jobs:
 
     - name: Post results to Issue
       uses: actions/github-script@v7
+      env:
+        TEST_OUTPUT: ${{ steps.test.outputs.TEST_OUTPUT }}
       with:
         script: |
-          const testOutput = `${{ steps.test.outputs.TEST_OUTPUT }}`;
+          const testOutput = process.env.TEST_OUTPUT;
           const issueNumber = context.issue.number;
           const triggerType = context.eventName;
+          const currentTime = new Date().toISOString();
+          const status = testOutput.includes('PASS') ? '✅ テスト成功' : '❌ テスト失敗';
           
-          const comment = `## 🧪 Claude Simple Integration - テスト実行結果
-
-**Issue**: #${issueNumber}
-**トリガー**: ${triggerType}
-**実行時刻**: ${new Date().toISOString()}
-
-### 📋 テスト結果
-\`\`\`
-${testOutput}
-\`\`\`
-
-### 🎯 ステータス
-${testOutput.includes('PASS') ? '✅ テスト成功' : '❌ テスト失敗'}
-
----
-*🤖 Claude Simple Integration により自動実行されました*`;
+          const comment = [
+            '## 🧪 Claude Simple Integration - テスト実行結果',
+            '',
+            `**Issue**: #${issueNumber}`,
+            `**トリガー**: ${triggerType}`,
+            `**実行時刻**: ${currentTime}`,
+            '',
+            '### 📋 テスト結果',
+            '```',
+            testOutput,
+            '```',
+            '',
+            '### 🎯 ステータス',
+            status,
+            '',
+            '---',
+            '*🤖 Claude Simple Integration により自動実行されました*'
+          ].join('\n');
 
           await github.rest.issues.createComment({
             issue_number: issueNumber,
