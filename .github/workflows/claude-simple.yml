@@ -1,0 +1,82 @@
+name: Claude Simple Integration
+
+on:
+  issues:
+    types: [opened, edited, labeled]
+  issue_comment:
+    types: [created]
+
+jobs:
+  claude-simple:
+    name: "🤖 Simple Claude Integration"
+    runs-on: ubuntu-latest
+    if: contains(github.event.issue.title, '[CLAUDE]') || contains(github.event.issue.labels.*.name, 'claude-actions') || contains(github.event.comment.body, '@claude')
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Run tests
+      id: test
+      run: |
+        echo "🧪 Running tests for Issue #${{ github.event.issue.number }}"
+        npm test > test_output.txt 2>&1
+        echo "TEST_OUTPUT<<EOF" >> $GITHUB_OUTPUT
+        cat test_output.txt >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: Post results to Issue
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const testOutput = `${{ steps.test.outputs.TEST_OUTPUT }}`;
+          const issueNumber = context.issue.number;
+          const triggerType = context.eventName;
+          
+          const comment = `## 🧪 Claude Simple Integration - テスト実行結果
+
+**Issue**: #${issueNumber}
+**トリガー**: ${triggerType}
+**実行時刻**: ${new Date().toISOString()}
+
+### 📋 テスト結果
+\`\`\`
+${testOutput}
+\`\`\`
+
+### 🎯 ステータス
+${testOutput.includes('PASS') ? '✅ テスト成功' : '❌ テスト失敗'}
+
+---
+*🤖 Claude Simple Integration により自動実行されました*`;
+
+          await github.rest.issues.createComment({
+            issue_number: issueNumber,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+
+    - name: Add executed label
+      uses: actions/github-script@v7
+      with:
+        script: |
+          await github.rest.issues.addLabels({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            labels: ['claude-executed']
+          });
