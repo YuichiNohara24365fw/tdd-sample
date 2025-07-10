@@ -52,6 +52,8 @@ jobs:
           echo "action_type=add_test" >> $GITHUB_OUTPUT
         elif echo "$INSTRUCTION_TEXT" | grep -qi "リファクタ\|refactor\|改善\|improve"; then
           echo "action_type=refactor" >> $GITHUB_OUTPUT
+        elif echo "$INSTRUCTION_TEXT" | grep -qi "レビュー\|review\|チェック\|check\|分析\|analyze"; then
+          echo "action_type=code_review" >> $GITHUB_OUTPUT
         elif echo "$INSTRUCTION_TEXT" | grep -qi "バグ修正\|bug fix\|fix bug\|修正"; then
           echo "action_type=bug_fix" >> $GITHUB_OUTPUT
         elif echo "$INSTRUCTION_TEXT" | grep -qi "TDD\|red.*green.*refactor"; then
@@ -179,6 +181,14 @@ EOF
             echo "🔧 Running refactor checks..."
             npm run lint > lint_results.txt 2>&1 || true
             npm test > refactor_test_results.txt 2>&1
+            ;;
+            
+          "code_review")
+            echo "👁️ Running code review analysis..."
+            echo "Triggering comprehensive code review..." > review_trigger.txt
+            npm run lint > review_lint.txt 2>&1 || true
+            npm run test:coverage > review_coverage.txt 2>&1 || true
+            echo "Code review analysis completed" >> review_trigger.txt
             ;;
             
           *)
