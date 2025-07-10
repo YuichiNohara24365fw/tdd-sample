@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TDD Sample Project - メインスクリーン</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            align-items: start;
+        }
+
+        .header {
+            grid-column: 1 / -1;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            color: rgba(255,255,255,0.9);
+            font-size: 1.2rem;
+        }
+
+        .section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .section:hover {
+            transform: translateY(-5px);
+        }
+
+        .section h2 {
+            color: #333;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            text-align: center;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .calculator-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .calc-group {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+        }
+
+        .calc-group h3 {
+            color: #495057;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #dee2e6;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.3s ease;
+            width: 100%;
+        }
+
+        .btn:hover {
+            background: #5a67d8;
+        }
+
+        .result {
+            background: #e6fffa;
+            border: 2px solid #38b2ac;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-weight: bold;
+            color: #234e52;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .string-utils .input-group {
+            flex-direction: column;
+        }
+
+        .string-utils input {
+            margin-bottom: 10px;
+        }
+
+        .string-utils .btn {
+            margin-bottom: 10px;
+        }
+
+        .demo-results {
+            grid-column: 1 / -1;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-top: 20px;
+        }
+
+        .demo-results h2 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 15px;
+        }
+
+        .demo-output {
+            background: #f1f3f4;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            border-radius: 0 8px 8px 0;
+            white-space: pre-line;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .calculator-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧮 TDD Sample Project</h1>
+            <p>Test-Driven Development サンプルアプリケーション</p>
+        </div>
+
+        <div class="section">
+            <h2>💻 Calculator (計算機)</h2>
+            <div class="calculator-grid">
+                <div class="calc-group">
+                    <h3>基本計算</h3>
+                    <div class="input-group">
+                        <input type="number" id="num1" placeholder="数値1" value="10">
+                        <input type="number" id="num2" placeholder="数値2" value="5">
+                    </div>
+                    <button class="btn" onclick="calculate('add')">➕ 足し算</button>
+                    <button class="btn" onclick="calculate('subtract')">➖ 引き算</button>
+                    <button class="btn" onclick="calculate('multiply')">✖️ 掛け算</button>
+                    <button class="btn" onclick="calculate('divide')">➗ 割り算</button>
+                    <div class="result" id="calc-result">結果がここに表示されます</div>
+                </div>
+                <div class="calc-group">
+                    <h3>累乗計算</h3>
+                    <div class="input-group">
+                        <input type="number" id="base" placeholder="底" value="2">
+                        <input type="number" id="exponent" placeholder="指数" value="3">
+                    </div>
+                    <button class="btn" onclick="calculate('power')">⚡ 累乗</button>
+                    <div class="result" id="power-result">結果がここに表示されます</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section string-utils">
+            <h2>📝 String Utils (文字列操作)</h2>
+            <div class="input-group">
+                <input type="text" id="text-input" placeholder="文字列を入力してください" value="Hello World">
+            </div>
+            <button class="btn" onclick="stringOperation('reverse')">🔄 文字列反転</button>
+            <button class="btn" onclick="stringOperation('isPalindrome')">🔍 回文判定</button>
+            <button class="btn" onclick="stringOperation('capitalize')">🔤 先頭大文字</button>
+            <button class="btn" onclick="stringOperation('wordCount')">📊 単語数カウント</button>
+            <div class="result" id="string-result">結果がここに表示されます</div>
+        </div>
+
+        <div class="demo-results">
+            <h2>🎯 デモ実行結果</h2>
+            <div class="demo-output" id="demo-output">
+=== TDD Sample Project Demo ===
+
+Calculator examples:
+2 + 3 = 5
+10 - 3 = 7
+4 * 5 = 20
+15 / 3 = 5
+2 ^ 4 = 16
+
+String utilities examples:
+Reverse 'hello': olleh
+Is 'racecar' a palindrome? true
+Capitalize 'world': World
+Word count in 'hello world test': 3
+
+=== Demo completed ===
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Calculator class implementation
+        class Calculator {
+            add(a, b) {
+                return a + b;
+            }
+
+            subtract(a, b) {
+                return a - b;
+            }
+
+            multiply(a, b) {
+                return a * b;
+            }
+
+            divide(a, b) {
+                if (b === 0) {
+                    throw new Error('Division by zero is not allowed');
+                }
+                return a / b;
+            }
+
+            power(base, exponent) {
+                return Math.pow(base, exponent);
+            }
+        }
+
+        // StringUtils class implementation
+        class StringUtils {
+            static reverse(str) {
+                return str.split('').reverse().join('');
+            }
+
+            static isPalindrome(str) {
+                const cleaned = str.toLowerCase();
+                return cleaned === this.reverse(cleaned);
+            }
+
+            static capitalize(str) {
+                if (str.length === 0) return str;
+                return str.charAt(0).toUpperCase() + str.slice(1);
+            }
+
+            static wordCount(str) {
+                if (str.trim() === '') return 0;
+                return str.trim().split(/\s+/).length;
+            }
+        }
+
+        // Make functions available globally
+        const calculator = new Calculator();
+        
+        window.calculate = function(operation) {
+            try {
+                const num1 = parseFloat(document.getElementById('num1').value);
+                const num2 = parseFloat(document.getElementById('num2').value);
+                const base = parseFloat(document.getElementById('base').value);
+                const exponent = parseFloat(document.getElementById('exponent').value);
+                
+                let result;
+                let resultElement;
+                
+                switch(operation) {
+                    case 'add':
+                        result = calculator.add(num1, num2);
+                        resultElement = document.getElementById('calc-result');
+                        resultElement.textContent = `${num1} + ${num2} = ${result}`;
+                        break;
+                    case 'subtract':
+                        result = calculator.subtract(num1, num2);
+                        resultElement = document.getElementById('calc-result');
+                        resultElement.textContent = `${num1} - ${num2} = ${result}`;
+                        break;
+                    case 'multiply':
+                        result = calculator.multiply(num1, num2);
+                        resultElement = document.getElementById('calc-result');
+                        resultElement.textContent = `${num1} × ${num2} = ${result}`;
+                        break;
+                    case 'divide':
+                        result = calculator.divide(num1, num2);
+                        resultElement = document.getElementById('calc-result');
+                        resultElement.textContent = `${num1} ÷ ${num2} = ${result}`;
+                        break;
+                    case 'power':
+                        result = calculator.power(base, exponent);
+                        resultElement = document.getElementById('power-result');
+                        resultElement.textContent = `${base} ^ ${exponent} = ${result}`;
+                        break;
+                }
+            } catch (error) {
+                const resultElement = operation === 'power' ? 
+                    document.getElementById('power-result') : 
+                    document.getElementById('calc-result');
+                resultElement.textContent = `エラー: ${error.message}`;
+                resultElement.style.background = '#fee2e2';
+                resultElement.style.borderColor = '#dc2626';
+                resultElement.style.color = '#dc2626';
+            }
+        };
+
+        window.stringOperation = function(operation) {
+            const text = document.getElementById('text-input').value;
+            const resultElement = document.getElementById('string-result');
+            
+            try {
+                let result;
+                
+                switch(operation) {
+                    case 'reverse':
+                        result = StringUtils.reverse(text);
+                        resultElement.textContent = `反転結果: "${result}"`;
+                        break;
+                    case 'isPalindrome':
+                        result = StringUtils.isPalindrome(text);
+                        resultElement.textContent = `"${text}" は回文ですか？ ${result ? 'はい' : 'いいえ'}`;
+                        break;
+                    case 'capitalize':
+                        result = StringUtils.capitalize(text);
+                        resultElement.textContent = `先頭大文字: "${result}"`;
+                        break;
+                    case 'wordCount':
+                        result = StringUtils.wordCount(text);
+                        resultElement.textContent = `単語数: ${result}個`;
+                        break;
+                }
+                
+                // Reset to success styling
+                resultElement.style.background = '#e6fffa';
+                resultElement.style.borderColor = '#38b2ac';
+                resultElement.style.color = '#234e52';
+                
+            } catch (error) {
+                resultElement.textContent = `エラー: ${error.message}`;
+                resultElement.style.background = '#fee2e2';
+                resultElement.style.borderColor = '#dc2626';
+                resultElement.style.color = '#dc2626';
+            }
+        };
+    </script>
+</body>
+</html>
