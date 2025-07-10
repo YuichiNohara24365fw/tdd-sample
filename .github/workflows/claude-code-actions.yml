@@ -44,7 +44,7 @@ jobs:
         # トリガー設定
         trigger_phrase: "@claude"
         
-        # タイムアウト設定（Maxプランで長時間処理対応）
-        timeout_minutes: 60
+        # タイムアウト設定（長時間処理対応 - 実験的最大値）
+        timeout_minutes: 180
         
         # プロジェクト固有の設定はCLAUDE.mdファイルで定義
