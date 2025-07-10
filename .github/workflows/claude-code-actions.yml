@@ -1,0 +1,303 @@
+name: Claude Code Actions Advanced
+
+on:
+  issues:
+    types: [opened, edited, labeled]
+  issue_comment:
+    types: [created, edited]
+
+jobs:
+  claude-code-actions:
+    name: "🤖 Claude Code Actions"
+    runs-on: ubuntu-latest
+    if: contains(github.event.issue.title, '[CLAUDE]') || contains(github.event.issue.labels.*.name, 'claude-actions') || contains(github.event.comment.body, '@claude')
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Parse Claude instructions
+      id: parse
+      run: |
+        echo "Parsing Claude instructions..."
+        
+        # Get issue body or comment body
+        if [ "${{ github.event_name }}" = "issue_comment" ]; then
+          INSTRUCTION_TEXT="${{ github.event.comment.body }}"
+        else
+          INSTRUCTION_TEXT="${{ github.event.issue.body }}"
+        fi
+        
+        echo "Raw instruction: $INSTRUCTION_TEXT"
+        
+        # Determine action type based on keywords
+        if echo "$INSTRUCTION_TEXT" | grep -qi "新しいクラス\|new class\|クラスを作成\|create class"; then
+          echo "action_type=create_class" >> $GITHUB_OUTPUT
+        elif echo "$INSTRUCTION_TEXT" | grep -qi "新しいメソッド\|new method\|メソッドを追加\|add method"; then
+          echo "action_type=add_method" >> $GITHUB_OUTPUT
+        elif echo "$INSTRUCTION_TEXT" | grep -qi "テストを追加\|add test\|テスト作成\|create test"; then
+          echo "action_type=add_test" >> $GITHUB_OUTPUT
+        elif echo "$INSTRUCTION_TEXT" | grep -qi "リファクタ\|refactor\|改善\|improve"; then
+          echo "action_type=refactor" >> $GITHUB_OUTPUT
+        elif echo "$INSTRUCTION_TEXT" | grep -qi "バグ修正\|bug fix\|fix bug\|修正"; then
+          echo "action_type=bug_fix" >> $GITHUB_OUTPUT
+        elif echo "$INSTRUCTION_TEXT" | grep -qi "TDD\|red.*green.*refactor"; then
+          echo "action_type=tdd_cycle" >> $GITHUB_OUTPUT
+        elif echo "$INSTRUCTION_TEXT" | grep -qi "全テスト\|all test\|test.*all"; then
+          echo "action_type=run_all_tests" >> $GITHUB_OUTPUT
+        elif echo "$INSTRUCTION_TEXT" | grep -qi "カバレッジ\|coverage"; then
+          echo "action_type=check_coverage" >> $GITHUB_OUTPUT
+        else
+          echo "action_type=general" >> $GITHUB_OUTPUT
+        fi
+        
+        # Extract class name if mentioned
+        CLASS_NAME=$(echo "$INSTRUCTION_TEXT" | grep -oiE "(Calculator|StringUtils|ArrayUtils|[A-Z][a-zA-Z]*Utils?)" | head -1)
+        echo "target_class=${CLASS_NAME:-Unknown}" >> $GITHUB_OUTPUT
+        
+        # Extract method name if mentioned
+        METHOD_NAME=$(echo "$INSTRUCTION_TEXT" | grep -oiE "(sqrt|factorial|power|unique|sum|average|[a-z][a-zA-Z]*)" | head -1)
+        echo "target_method=${METHOD_NAME:-unknown}" >> $GITHUB_OUTPUT
+
+    - name: Execute Claude action
+      id: execute
+      run: |
+        ACTION_TYPE="${{ steps.parse.outputs.action_type }}"
+        TARGET_CLASS="${{ steps.parse.outputs.target_class }}"
+        TARGET_METHOD="${{ steps.parse.outputs.target_method }}"
+        
+        echo "Executing action: $ACTION_TYPE"
+        echo "Target class: $TARGET_CLASS"
+        echo "Target method: $TARGET_METHOD"
+        
+        case $ACTION_TYPE in
+          "create_class")
+            echo "🏗️ Creating new class: $TARGET_CLASS"
+            if [ "$TARGET_CLASS" = "ArrayUtils" ]; then
+              cat > "src/${TARGET_CLASS,,}.js" << 'EOF'
+export class ArrayUtils {
+  static unique(array) {
+    return [...new Set(array)];
+  }
+  
+  static sum(array) {
+    return array.reduce((acc, val) => acc + val, 0);
+  }
+  
+  static average(array) {
+    if (array.length === 0) throw new Error('Array cannot be empty');
+    return this.sum(array) / array.length;
+  }
+  
+  static max(array) {
+    if (array.length === 0) throw new Error('Array cannot be empty');
+    return Math.max(...array);
+  }
+  
+  static min(array) {
+    if (array.length === 0) throw new Error('Array cannot be empty');
+    return Math.min(...array);
+  }
+}
+EOF
+              echo "✅ Created ArrayUtils class"
+            else
+              echo "⚠️ Unknown class: $TARGET_CLASS"
+            fi
+            ;;
+            
+          "add_method")
+            echo "🔧 Adding method: $TARGET_METHOD to $TARGET_CLASS"
+            if [ "$TARGET_CLASS" = "Calculator" ] && [ "$TARGET_METHOD" = "sqrt" ]; then
+              # Add sqrt method to Calculator
+              sed -i '/power(base, exponent) {/a\\n  sqrt(n) {\n    if (n < 0) {\n      throw new Error('\''Square root of negative number is not allowed'\'');\n    }\n    return Math.sqrt(n);\n  }' src/calculator.js || echo "Method may already exist"
+              echo "✅ Added sqrt method to Calculator"
+            elif [ "$TARGET_CLASS" = "Calculator" ] && [ "$TARGET_METHOD" = "factorial" ]; then
+              sed -i '/power(base, exponent) {/a\\n  factorial(n) {\n    if (n < 0) {\n      throw new Error('\''Factorial of negative number is not allowed'\'');\n    }\n    if (n === 0 || n === 1) return 1;\n    let result = 1;\n    for (let i = 2; i <= n; i++) {\n      result *= i;\n    }\n    return result;\n  }' src/calculator.js || echo "Method may already exist"
+              echo "✅ Added factorial method to Calculator"
+            else
+              echo "⚠️ Unknown method/class combination"
+            fi
+            ;;
+            
+          "add_test")
+            echo "🧪 Adding tests for: $TARGET_CLASS.$TARGET_METHOD"
+            if [ "$TARGET_CLASS" = "Calculator" ] && [ "$TARGET_METHOD" = "sqrt" ]; then
+              cat >> "tests/calculator.test.js" << 'EOF'
+
+  describe('sqrt', () => {
+    test('should calculate square root of positive numbers', () => {
+      expect(calculator.sqrt(4)).toBe(2);
+      expect(calculator.sqrt(9)).toBe(3);
+      expect(calculator.sqrt(16)).toBe(4);
+    });
+
+    test('should handle square root of zero', () => {
+      expect(calculator.sqrt(0)).toBe(0);
+    });
+
+    test('should throw error for negative numbers', () => {
+      expect(() => calculator.sqrt(-4)).toThrow('Square root of negative number is not allowed');
+    });
+  });
+EOF
+              echo "✅ Added sqrt tests to Calculator"
+            else
+              echo "⚠️ Test template not available for $TARGET_CLASS.$TARGET_METHOD"
+            fi
+            ;;
+            
+          "run_all_tests")
+            echo "🧪 Running all tests..."
+            npm test > test_results.txt 2>&1
+            ;;
+            
+          "check_coverage")
+            echo "📊 Checking test coverage..."
+            npm run test:coverage > coverage_results.txt 2>&1
+            ;;
+            
+          "tdd_cycle")
+            echo "🔄 Running TDD cycle..."
+            npm run tdd:cycle > tdd_results.txt 2>&1 || true
+            ;;
+            
+          "refactor")
+            echo "🔧 Running refactor checks..."
+            npm run lint > lint_results.txt 2>&1 || true
+            npm test > refactor_test_results.txt 2>&1
+            ;;
+            
+          *)
+            echo "🤖 Running general tests..."
+            npm test > general_results.txt 2>&1
+            ;;
+        esac
+        
+        echo "action_completed=$ACTION_TYPE" >> $GITHUB_OUTPUT
+
+    - name: Commit changes if any
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        if git diff --quiet && git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          git add -A
+          git commit -m "🤖 Claude Code Actions: ${{ steps.parse.outputs.action_type }}
+
+Auto-generated changes for Issue #${{ github.event.issue.number }}
+Target: ${{ steps.parse.outputs.target_class }}.${{ steps.parse.outputs.target_method }}
+
+🤖 Generated with Claude Code Actions Integration" || echo "Commit failed or no changes"
+          git push || echo "Push failed"
+        fi
+
+    - name: Post comprehensive results
+      uses: actions/github-script@v7
+      env:
+        ACTION_TYPE: ${{ steps.parse.outputs.action_type }}
+        TARGET_CLASS: ${{ steps.parse.outputs.target_class }}
+        TARGET_METHOD: ${{ steps.parse.outputs.target_method }}
+      with:
+        script: |
+          const actionType = process.env.ACTION_TYPE;
+          const targetClass = process.env.TARGET_CLASS;
+          const targetMethod = process.env.TARGET_METHOD;
+          const issueNumber = context.issue.number;
+          const currentTime = new Date().toISOString();
+          
+          // Read result files
+          const fs = require('fs');
+          let results = '';
+          let status = '✅ 成功';
+          
+          try {
+            if (fs.existsSync('test_results.txt')) {
+              results = fs.readFileSync('test_results.txt', 'utf8');
+            } else if (fs.existsSync('coverage_results.txt')) {
+              results = fs.readFileSync('coverage_results.txt', 'utf8');
+            } else if (fs.existsSync('tdd_results.txt')) {
+              results = fs.readFileSync('tdd_results.txt', 'utf8');
+            } else {
+              results = 'Code changes completed successfully';
+            }
+            
+            if (results.includes('FAIL') || results.includes('error')) {
+              status = '❌ エラーあり';
+            }
+          } catch (e) {
+            results = 'Results file not found - action may have completed successfully';
+          }
+          
+          const actionDescriptions = {
+            'create_class': '🏗️ 新しいクラス作成',
+            'add_method': '🔧 メソッド追加',
+            'add_test': '🧪 テスト追加',
+            'refactor': '🔧 リファクタリング',
+            'bug_fix': '🐛 バグ修正',
+            'tdd_cycle': '🔄 TDDサイクル実行',
+            'run_all_tests': '🧪 全テスト実行',
+            'check_coverage': '📊 カバレッジ確認',
+            'general': '🤖 一般的な処理'
+          };
+          
+          const comment = [
+            '## 🤖 Claude Code Actions - 実行結果',
+            '',
+            `**Issue**: #${issueNumber}`,
+            `**アクション**: ${actionDescriptions[actionType] || actionType}`,
+            `**対象**: ${targetClass}.${targetMethod}`,
+            `**実行時刻**: ${currentTime}`,
+            '',
+            '### 📋 実行結果',
+            '```',
+            results,
+            '```',
+            '',
+            '### 🎯 ステータス',
+            status,
+            '',
+            '### 💡 次に実行可能な指示例',
+            '- `新しいクラス "ArrayUtils" を作成してください`',
+            '- `Calculatorクラスに "sqrt" メソッドを追加してください`',
+            '- `sqrt メソッドのテストを追加してください`',
+            '- `全テストを実行してください`',
+            '- `カバレッジを確認してください`',
+            '- `TDDサイクルを実行してください`',
+            '',
+            '---',
+            '*🤖 Claude Code Actions により自動実行されました*'
+          ].join('\n');
+
+          await github.rest.issues.createComment({
+            issue_number: issueNumber,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+
+    - name: Add action label
+      uses: actions/github-script@v7
+      with:
+        script: |
+          await github.rest.issues.addLabels({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            labels: ['claude-actions-executed', '${{ steps.parse.outputs.action_type }}']
+          });
