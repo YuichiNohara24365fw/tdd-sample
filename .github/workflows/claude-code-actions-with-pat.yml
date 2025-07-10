@@ -1,4 +1,4 @@
-name: Claude Code Actions - Official
+name: Claude Code Actions - PAT Version
 
 on:
   issue_comment:
@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   claude-code:
-    name: "🤖 Claude Code Actions"
+    name: "🤖 Claude Code Actions (PAT)"
     runs-on: ubuntu-latest
     if: |
       contains(github.event.comment.body, '@claude') ||
@@ -28,6 +28,8 @@ jobs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
+        # Personal Access Token を使用
+        token: ${{ secrets.CLAUDE_PAT }}
 
     - name: Run Claude Code Action
       uses: anthropics/claude-code-action@beta
@@ -37,8 +39,8 @@ jobs:
         fallback_model: "claude-sonnet-4-20250514"
         anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
         
-        # GitHub token を明示的に指定
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+        # Personal Access Token を使用
+        github_token: ${{ secrets.CLAUDE_PAT }}
         
         # トリガー設定
         trigger_phrase: "@claude"
@@ -46,7 +48,7 @@ jobs:
         # タイムアウト設定（Max plan なので長時間処理可能）
         timeout_minutes: "60"
         
-        # プロジェクト固有の指示（正しいパラメータ名）
+        # プロジェクト固有の指示
         custom_instructions: |
           You are working on a Node.js TDD project with:
           - ES6 modules
@@ -67,6 +69,6 @@ jobs:
           - tests/ - test files
           - Use ESM imports/exports
           
-        # 環境変数（正しいパラメータ名）
+        # 環境変数
         claude_env: |
           NODE_ENV=test
