@@ -1,0 +1,72 @@
+name: Claude Integration Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Issue number to process'
+        required: true
+        type: string
+      issue_title:
+        description: 'Issue title'
+        required: true
+        type: string
+
+jobs:
+  test-integration:
+    name: "🧪 Test Claude Integration"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Check trigger conditions
+      run: |
+        echo "Testing trigger conditions..."
+        echo "Issue Number: ${{ github.event.inputs.issue_number }}"
+        echo "Issue Title: ${{ github.event.inputs.issue_title }}"
+        
+        if [[ "${{ github.event.inputs.issue_title }}" == *"[CLAUDE]"* ]]; then
+          echo "✅ [CLAUDE] trigger detected"
+        else
+          echo "❌ No [CLAUDE] trigger found"
+        fi
+
+    - name: Run test execution
+      run: |
+        echo "🧪 Running all tests..."
+        npm test
+
+    - name: Run coverage
+      run: |
+        echo "📊 Running coverage analysis..."
+        npm run test:coverage
+
+    - name: Run lint
+      run: |
+        echo "🔍 Running lint check..."
+        npm run lint
+
+    - name: Test summary
+      run: |
+        echo "## 🎯 Manual Test Results"
+        echo "✅ Dependencies installed successfully"
+        echo "✅ Tests executed successfully"
+        echo "✅ Coverage analysis completed"
+        echo "✅ Lint check passed"
+        echo ""
+        echo "🚀 Claude Integration workflow is ready!"
