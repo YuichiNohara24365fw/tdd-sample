@@ -139,9 +139,18 @@ REFACTORフェーズ: コードの品質を改善してください
 - "Run workflow" で手動実行可能
 - アクションタイプを選択（test, tdd-red, tdd-green, etc.）
 
-## ⚡ Issue作成後の実行方法
+## ⚡ GitHub上でのClaude Code Actions実行
 
-**重要**: Issue作成だけでは自動実行されません。以下の方法で手動実行が必要です：
+### 🚀 自動実行（NEW!）
+**Issue作成で自動実行されます**：
+
+1. **タイトルに[CLAUDE]を含む** Issue作成
+2. **自動的にGitHub Actionsが実行**
+3. **結果がIssueにコメントで投稿**
+
+### 📋 手動実行方法
+
+**重要**: GitHub App未設定の場合は手動実行が必要です：
 
 ### 1. Claude Code Actions実行（推奨）
 ```

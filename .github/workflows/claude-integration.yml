@@ -1,0 +1,205 @@
+name: Claude Code Actions Integration
+
+on:
+  issues:
+    types: [opened, edited, labeled]
+  issue_comment:
+    types: [created, edited]
+
+jobs:
+  check-claude-trigger:
+    name: "🤖 Check Claude Code Actions Trigger"
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.check.outputs.should_run }}
+      action_type: ${{ steps.check.outputs.action_type }}
+    
+    steps:
+    - name: Check if Claude should be triggered
+      id: check
+      run: |
+        echo "Checking issue title and labels..."
+        
+        # Check if issue title contains [CLAUDE]
+        if [[ "${{ github.event.issue.title }}" == *"[CLAUDE]"* ]]; then
+          echo "should_run=true" >> $GITHUB_OUTPUT
+          echo "action_type=issue" >> $GITHUB_OUTPUT
+          echo "✅ Found [CLAUDE] in issue title"
+        # Check if issue has claude-actions label
+        elif [[ "${{ contains(github.event.issue.labels.*.name, 'claude-actions') }}" == "true" ]]; then
+          echo "should_run=true" >> $GITHUB_OUTPUT
+          echo "action_type=label" >> $GITHUB_OUTPUT
+          echo "✅ Found claude-actions label"
+        # Check if comment mentions @claude
+        elif [[ "${{ github.event.comment.body }}" == *"@claude"* ]]; then
+          echo "should_run=true" >> $GITHUB_OUTPUT
+          echo "action_type=comment" >> $GITHUB_OUTPUT
+          echo "✅ Found @claude mention in comment"
+        else
+          echo "should_run=false" >> $GITHUB_OUTPUT
+          echo "❌ No Claude trigger found"
+        fi
+
+  manual-execution:
+    name: "🎯 Manual Claude Code Actions Execution"
+    runs-on: ubuntu-latest
+    needs: check-claude-trigger
+    if: needs.check-claude-trigger.outputs.should_run == 'true'
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Extract Claude instructions
+      id: extract
+      run: |
+        echo "Extracting instructions from issue..."
+        ISSUE_BODY="${{ github.event.issue.body }}"
+        
+        # Extract instructions from issue body
+        if [[ "$ISSUE_BODY" == *"プロジェクトの全テストを実行"* ]]; then
+          echo "instruction=test" >> $GITHUB_OUTPUT
+        elif [[ "$ISSUE_BODY" == *"カバレッジ"* ]]; then
+          echo "instruction=coverage" >> $GITHUB_OUTPUT  
+        elif [[ "$ISSUE_BODY" == *"lint"* || "$ISSUE_BODY" == *"リンター"* ]]; then
+          echo "instruction=lint" >> $GITHUB_OUTPUT
+        elif [[ "$ISSUE_BODY" == *"TDD"* || "$ISSUE_BODY" == *"red"* ]]; then
+          echo "instruction=tdd" >> $GITHUB_OUTPUT
+        else
+          echo "instruction=test" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Execute based on instruction
+      id: execute
+      run: |
+        INSTRUCTION="${{ steps.extract.outputs.instruction }}"
+        echo "Executing instruction: $INSTRUCTION"
+        
+        case $INSTRUCTION in
+          "test")
+            echo "🧪 Running all tests..."
+            npm test > test_results.txt 2>&1
+            echo "TEST_RESULTS<<EOF" >> $GITHUB_OUTPUT
+            cat test_results.txt >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            ;;
+          "coverage")
+            echo "📊 Running coverage analysis..."
+            npm run test:coverage > coverage_results.txt 2>&1
+            echo "COVERAGE_RESULTS<<EOF" >> $GITHUB_OUTPUT
+            cat coverage_results.txt >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            ;;
+          "lint")
+            echo "🔍 Running lint check..."
+            npm run lint > lint_results.txt 2>&1 || true
+            echo "LINT_RESULTS<<EOF" >> $GITHUB_OUTPUT
+            cat lint_results.txt >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            ;;
+          "tdd")
+            echo "🔄 Running TDD cycle..."
+            npm run tdd:cycle > tdd_results.txt 2>&1 || true
+            echo "TDD_RESULTS<<EOF" >> $GITHUB_OUTPUT
+            cat tdd_results.txt >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            ;;
+        esac
+
+    - name: Post results to Issue
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const instruction = '${{ steps.extract.outputs.instruction }}';
+          let results = '';
+          let title = '';
+          
+          switch(instruction) {
+            case 'test':
+              results = `${{ steps.execute.outputs.TEST_RESULTS }}`;
+              title = '🧪 テスト実行結果';
+              break;
+            case 'coverage':
+              results = `${{ steps.execute.outputs.COVERAGE_RESULTS }}`;
+              title = '📊 カバレッジ分析結果';
+              break;
+            case 'lint':
+              results = `${{ steps.execute.outputs.LINT_RESULTS }}`;
+              title = '🔍 リンター結果';
+              break;
+            case 'tdd':
+              results = `${{ steps.execute.outputs.TDD_RESULTS }}`;
+              title = '🔄 TDDサイクル実行結果';
+              break;
+          }
+          
+          const comment = `## ${title}
+
+**実行トリガー**: ${{ needs.check-claude-trigger.outputs.action_type }}
+**実行時刻**: ${new Date().toISOString()}
+
+### 📋 実行結果
+
+\`\`\`
+${results}
+\`\`\`
+
+### 🎯 サマリー
+- **ワークフロー**: GitHub Actions経由で実行
+- **ステータス**: ${results.includes('FAIL') || results.includes('error') ? '❌ エラーあり' : '✅ 正常完了'}
+- **実行者**: @${{ github.actor }}
+
+---
+*🤖 この結果は Claude Code Actions Integration により自動生成されました*`;
+
+          await github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+
+    - name: Add completion label
+      uses: actions/github-script@v7
+      with:
+        script: |
+          await github.rest.issues.addLabels({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            labels: ['claude-executed']
+          });
+
+  summary:
+    name: "📊 Execution Summary"
+    runs-on: ubuntu-latest
+    needs: [check-claude-trigger, manual-execution]
+    if: always()
+    
+    steps:
+    - name: Execution Summary
+      run: |
+        echo "## 🎯 Claude Code Actions Integration Summary"
+        echo ""
+        echo "**Trigger Check**: ${{ needs.check-claude-trigger.outputs.should_run }}"
+        echo "**Action Type**: ${{ needs.check-claude-trigger.outputs.action_type }}"
+        echo "**Execution**: ${{ needs.manual-execution.result }}"
+        echo ""
+        if [[ "${{ needs.check-claude-trigger.outputs.should_run }}" == "true" ]]; then
+          echo "✅ Claude Code Actions was triggered and executed"
+        else
+          echo "ℹ️ No Claude trigger detected - workflow skipped"
+        fi
