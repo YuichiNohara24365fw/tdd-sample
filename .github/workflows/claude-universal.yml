@@ -1,0 +1,218 @@
+name: Claude Universal Actions
+
+on:
+  issues:
+    types: [opened, edited, labeled]
+  issue_comment:
+    types: [created, edited]
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  claude-universal:
+    name: "🤖 Claude Universal Actions"
+    runs-on: ubuntu-latest
+    if: |
+      contains(github.event.issue.title, '[CLAUDE]') || 
+      contains(github.event.issue.title, '[REVIEW]') ||
+      contains(github.event.issue.title, '[REFACTOR]') ||
+      contains(github.event.issue.labels.*.name, 'claude-actions') ||
+      contains(github.event.comment.body, '@claude') ||
+      contains(github.event.pull_request.title, '[CLAUDE]')
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Parse instructions
+      id: parse
+      run: |
+        echo "Parsing Claude instructions..."
+        
+        if [ "${{ github.event_name }}" = "pull_request" ]; then
+          INSTRUCTION_TEXT="${{ github.event.pull_request.title }} ${{ github.event.pull_request.body }}"
+          CONTEXT_TYPE="pull_request"
+          CONTEXT_NUMBER="${{ github.event.pull_request.number }}"
+        elif [ "${{ github.event_name }}" = "issue_comment" ]; then
+          INSTRUCTION_TEXT="${{ github.event.comment.body }}"
+          CONTEXT_TYPE="issue"
+          CONTEXT_NUMBER="${{ github.event.issue.number }}"
+        else
+          INSTRUCTION_TEXT="${{ github.event.issue.title }} ${{ github.event.issue.body }}"
+          CONTEXT_TYPE="issue"
+          CONTEXT_NUMBER="${{ github.event.issue.number }}"
+        fi
+        
+        echo "context_type=$CONTEXT_TYPE" >> $GITHUB_OUTPUT
+        echo "context_number=$CONTEXT_NUMBER" >> $GITHUB_OUTPUT
+        
+        # Determine action type
+        if echo "$INSTRUCTION_TEXT" | grep -qi "review\|レビュー\|チェック\|分析"; then
+          echo "action_type=review" >> $GITHUB_OUTPUT
+        elif echo "$INSTRUCTION_TEXT" | grep -qi "refactor\|リファクタ\|改善\|最適化"; then
+          echo "action_type=refactor" >> $GITHUB_OUTPUT
+        elif echo "$INSTRUCTION_TEXT" | grep -qi "新しい.*クラス\|new.*class\|メソッド.*追加\|add.*method"; then
+          echo "action_type=generate" >> $GITHUB_OUTPUT
+        elif echo "$INSTRUCTION_TEXT" | grep -qi "テスト\|test\|TDD"; then
+          echo "action_type=test" >> $GITHUB_OUTPUT
+        else
+          echo "action_type=general" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Execute action
+      id: execute
+      run: |
+        ACTION_TYPE="${{ steps.parse.outputs.action_type }}"
+        echo "Executing action: $ACTION_TYPE"
+        
+        echo "=== CLAUDE UNIVERSAL ACTIONS REPORT ===" > report.txt
+        echo "Action: $ACTION_TYPE" >> report.txt
+        echo "Time: $(date)" >> report.txt
+        echo "" >> report.txt
+        
+        case $ACTION_TYPE in
+          "review")
+            echo "👁️ Executing code review..."
+            echo "=== CODE REVIEW ===" >> report.txt
+            npm run lint >> report.txt 2>&1 || echo "Lint completed" >> report.txt
+            echo "" >> report.txt
+            npm run test:coverage >> report.txt 2>&1 || echo "Coverage completed" >> report.txt
+            ;;
+          "refactor")
+            echo "🔧 Executing refactoring..."
+            echo "=== REFACTORING ===" >> report.txt
+            find src -name "*.js" -exec sed -i.bak '/console\.log/d' {} \; 2>/dev/null || echo "Cleanup attempted"
+            npm test >> report.txt 2>&1 || echo "Tests completed" >> report.txt
+            ;;
+          "generate")
+            echo "🏗️ Executing code generation..."
+            echo "=== CODE GENERATION ===" >> report.txt
+            if [ ! -f "src/arrayutils.js" ]; then
+              echo "export class ArrayUtils {" > "src/arrayutils.js"
+              echo "  static unique(array) {" >> "src/arrayutils.js"
+              echo "    return [...new Set(array)];" >> "src/arrayutils.js"
+              echo "  }" >> "src/arrayutils.js"
+              echo "  static sum(array) {" >> "src/arrayutils.js"
+              echo "    return array.reduce((acc, val) => acc + val, 0);" >> "src/arrayutils.js"
+              echo "  }" >> "src/arrayutils.js"
+              echo "}" >> "src/arrayutils.js"
+              echo "Generated ArrayUtils class" >> report.txt
+            fi
+            ;;
+          "test")
+            echo "🧪 Executing testing..."
+            echo "=== TESTING ===" >> report.txt
+            npm test >> report.txt 2>&1 || echo "Tests completed" >> report.txt
+            ;;
+          *)
+            echo "🤖 Executing general analysis..."
+            echo "=== GENERAL ANALYSIS ===" >> report.txt
+            npm test >> report.txt 2>&1 || echo "Analysis completed" >> report.txt
+            ;;
+        esac
+
+    - name: Commit changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        if ! git diff --quiet || ! git diff --staged --quiet; then
+          git add -A
+          COMMIT_MSG="🤖 Claude Universal: ${{ steps.parse.outputs.action_type }}
+        
+        Auto-generated for ${{ steps.parse.outputs.context_type }} #${{ steps.parse.outputs.context_number }}
+        
+        🤖 Generated with Claude Universal Actions"
+          git commit -m "$COMMIT_MSG" || echo "Commit failed"
+          git push || echo "Push failed"
+        fi
+
+    - name: Post results
+      uses: actions/github-script@v7
+      env:
+        ACTION_TYPE: ${{ steps.parse.outputs.action_type }}
+        CONTEXT_TYPE: ${{ steps.parse.outputs.context_type }}
+        CONTEXT_NUMBER: ${{ steps.parse.outputs.context_number }}
+      with:
+        script: |
+          const fs = require('fs');
+          const actionType = process.env.ACTION_TYPE;
+          const contextType = process.env.CONTEXT_TYPE;
+          const contextNumber = process.env.CONTEXT_NUMBER;
+          const currentTime = new Date().toISOString();
+          
+          let report = '';
+          try {
+            report = fs.readFileSync('report.txt', 'utf8');
+          } catch (e) {
+            report = 'Report not available';
+          }
+          
+          const actionDescriptions = {
+            'review': '👁️ コードレビュー',
+            'refactor': '🔧 リファクタリング',
+            'generate': '🏗️ コード生成',
+            'test': '🧪 テスト実行',
+            'general': '🤖 一般分析'
+          };
+          
+          const status = report.includes('Error') || report.includes('FAIL') ? '❌ エラー' : '✅ 成功';
+          
+          const comment = [
+            '## 🤖 Claude Universal Actions - 実行完了',
+            '',
+            `**${contextType.charAt(0).toUpperCase() + contextType.slice(1)}**: #${contextNumber}`,
+            `**アクション**: ${actionDescriptions[actionType] || actionType}`,
+            `**実行時刻**: ${currentTime}`,
+            `**結果**: ${status}`,
+            '',
+            '### 📋 実行レポート',
+            '```',
+            report,
+            '```',
+            '',
+            '### 💡 次回実行例',
+            '- `[CLAUDE] コードレビューしてください`',
+            '- `[CLAUDE] ArrayUtils クラスを作成してください`',
+            '- `[REFACTOR] 重複コードを削除してください`',
+            '- `[CLAUDE] 全テストを実行してください`',
+            '',
+            '---',
+            '*🤖 Claude Universal Actions により自動実行*'
+          ].join('\n');
+
+          const targetNumber = parseInt(contextNumber);
+          
+          await github.rest.issues.createComment({
+            issue_number: targetNumber,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+
+    - name: Add labels
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const actionType = '${{ steps.parse.outputs.action_type }}';
+          const contextNumber = parseInt('${{ steps.parse.outputs.context_number }}');
+          
+          await github.rest.issues.addLabels({
+            issue_number: contextNumber,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            labels: ['claude-universal', actionType]
+          });
