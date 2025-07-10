@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TDD Sample - Calculator & StringUtils Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Hiragino Kaku Gothic Pro', 'Noto Sans JP', 'Yu Gothic', 'Meiryo', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+
+        .demo-section {
+            background: #fff;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            border-left: 5px solid #3498db;
+        }
+
+        .demo-section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .input-group label {
+            font-weight: 600;
+            color: #34495e;
+            min-width: 80px;
+        }
+
+        .input-group input, .input-group select {
+            flex: 1;
+            min-width: 120px;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #27ae60;
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .error {
+            border-left-color: #e74c3c;
+            background: #fdf2f2;
+            color: #e74c3c;
+        }
+
+        .calculator-section {
+            border-left-color: #e74c3c;
+        }
+
+        .string-section {
+            border-left-color: #27ae60;
+        }
+
+        .demo-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .demo-btn {
+            background: linear-gradient(45deg, #9b59b6, #8e44ad);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .demo-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(155, 89, 182, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .input-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .input-group label {
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧮 TDD Sample Project</h1>
+        <p class="subtitle">Calculator & StringUtils インタラクティブデモ</p>
+
+        <!-- Calculator Section -->
+        <div class="demo-section calculator-section">
+            <h2>🧮 Calculator（計算機）</h2>
+            <div class="input-group">
+                <label>数値1:</label>
+                <input type="number" id="calc-num1" placeholder="例: 10" value="10">
+            </div>
+            <div class="input-group">
+                <label>数値2:</label>
+                <input type="number" id="calc-num2" placeholder="例: 5" value="5">
+            </div>
+            <div class="input-group">
+                <label>演算:</label>
+                <select id="calc-operation">
+                    <option value="add">加算 (+)</option>
+                    <option value="subtract">減算 (-)</option>
+                    <option value="multiply">乗算 (×)</option>
+                    <option value="divide">除算 (÷)</option>
+                    <option value="power">累乗 (^)</option>
+                </select>
+                <button class="btn" onclick="calculate()">計算実行</button>
+            </div>
+            <div class="result" id="calc-result" style="display: none;">
+                結果: <span id="calc-value"></span>
+            </div>
+        </div>
+
+        <!-- StringUtils Section -->
+        <div class="demo-section string-section">
+            <h2>📝 StringUtils（文字列操作）</h2>
+            <div class="input-group">
+                <label>文字列:</label>
+                <input type="text" id="string-input" placeholder="例: Hello World" value="Hello World">
+            </div>
+            <div class="input-group">
+                <label>操作:</label>
+                <select id="string-operation">
+                    <option value="reverse">文字列反転</option>
+                    <option value="isPalindrome">回文判定</option>
+                    <option value="capitalize">先頭大文字化</option>
+                    <option value="wordCount">単語数カウント</option>
+                </select>
+                <button class="btn" onclick="processString()">実行</button>
+            </div>
+            <div class="result" id="string-result" style="display: none;">
+                結果: <span id="string-value"></span>
+            </div>
+        </div>
+
+        <!-- Demo Actions -->
+        <div class="demo-actions">
+            <button class="demo-btn" onclick="runCalculatorDemo()">🧮 計算機デモ実行</button>
+            <button class="demo-btn" onclick="runStringUtilsDemo()">📝 文字列操作デモ実行</button>
+            <button class="demo-btn" onclick="runFullDemo()">🎯 全機能デモ実行</button>
+        </div>
+    </div>
+
+    <script>
+        // Calculator Class Implementation
+        class Calculator {
+            add(a, b) {
+                return a + b;
+            }
+
+            subtract(a, b) {
+                return a - b;
+            }
+
+            multiply(a, b) {
+                return a * b;
+            }
+
+            divide(a, b) {
+                if (b === 0) {
+                    throw new Error('ゼロで割ることはできません');
+                }
+                return a / b;
+            }
+
+            power(a, b) {
+                return Math.pow(a, b);
+            }
+        }
+
+        // StringUtils Class Implementation
+        class StringUtils {
+            static reverse(str) {
+                return str.split('').reverse().join('');
+            }
+
+            static isPalindrome(str) {
+                const cleaned = str.toLowerCase().replace(/[^a-z0-9]/g, '');
+                return cleaned === cleaned.split('').reverse().join('');
+            }
+
+            static capitalize(str) {
+                return str.charAt(0).toUpperCase() + str.slice(1);
+            }
+
+            static wordCount(str) {
+                return str.trim().split(/\s+/).length;
+            }
+        }
+
+        // Initialize instances
+        const calculator = new Calculator();
+
+        // Calculator Functions
+        function calculate() {
+            const num1 = parseFloat(document.getElementById('calc-num1').value);
+            const num2 = parseFloat(document.getElementById('calc-num2').value);
+            const operation = document.getElementById('calc-operation').value;
+            const resultDiv = document.getElementById('calc-result');
+            const resultValue = document.getElementById('calc-value');
+
+            if (isNaN(num1) || isNaN(num2)) {
+                resultDiv.className = 'result error';
+                resultValue.textContent = 'エラー: 有効な数値を入力してください';
+                resultDiv.style.display = 'block';
+                return;
+            }
+
+            try {
+                let result;
+                switch (operation) {
+                    case 'add':
+                        result = calculator.add(num1, num2);
+                        break;
+                    case 'subtract':
+                        result = calculator.subtract(num1, num2);
+                        break;
+                    case 'multiply':
+                        result = calculator.multiply(num1, num2);
+                        break;
+                    case 'divide':
+                        result = calculator.divide(num1, num2);
+                        break;
+                    case 'power':
+                        result = calculator.power(num1, num2);
+                        break;
+                    default:
+                        throw new Error('不明な演算です');
+                }
+
+                resultDiv.className = 'result';
+                resultValue.textContent = result;
+                resultDiv.style.display = 'block';
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultValue.textContent = 'エラー: ' + error.message;
+                resultDiv.style.display = 'block';
+            }
+        }
+
+        // StringUtils Functions
+        function processString() {
+            const input = document.getElementById('string-input').value;
+            const operation = document.getElementById('string-operation').value;
+            const resultDiv = document.getElementById('string-result');
+            const resultValue = document.getElementById('string-value');
+
+            if (!input.trim()) {
+                resultDiv.className = 'result error';
+                resultValue.textContent = 'エラー: 文字列を入力してください';
+                resultDiv.style.display = 'block';
+                return;
+            }
+
+            try {
+                let result;
+                switch (operation) {
+                    case 'reverse':
+                        result = StringUtils.reverse(input);
+                        break;
+                    case 'isPalindrome':
+                        result = StringUtils.isPalindrome(input) ? '回文です' : '回文ではありません';
+                        break;
+                    case 'capitalize':
+                        result = StringUtils.capitalize(input);
+                        break;
+                    case 'wordCount':
+                        result = StringUtils.wordCount(input) + ' 個の単語';
+                        break;
+                    default:
+                        throw new Error('不明な操作です');
+                }
+
+                resultDiv.className = 'result';
+                resultValue.textContent = result;
+                resultDiv.style.display = 'block';
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultValue.textContent = 'エラー: ' + error.message;
+                resultDiv.style.display = 'block';
+            }
+        }
+
+        // Demo Functions
+        function runCalculatorDemo() {
+            const operations = ['add', 'subtract', 'multiply', 'divide', 'power'];
+            const num1Values = [10, 15, 8, 100, 2];
+            const num2Values = [5, 3, 4, 4, 3];
+            
+            let index = 0;
+            const interval = setInterval(() => {
+                if (index >= operations.length) {
+                    clearInterval(interval);
+                    return;
+                }
+                
+                document.getElementById('calc-num1').value = num1Values[index];
+                document.getElementById('calc-num2').value = num2Values[index];
+                document.getElementById('calc-operation').value = operations[index];
+                calculate();
+                index++;
+            }, 1500);
+        }
+
+        function runStringUtilsDemo() {
+            const operations = ['reverse', 'isPalindrome', 'capitalize', 'wordCount'];
+            const testStrings = ['Hello World', 'racecar', 'hello world', 'Test Driven Development'];
+            
+            let index = 0;
+            const interval = setInterval(() => {
+                if (index >= operations.length) {
+                    clearInterval(interval);
+                    return;
+                }
+                
+                document.getElementById('string-input').value = testStrings[index];
+                document.getElementById('string-operation').value = operations[index];
+                processString();
+                index++;
+            }, 1500);
+        }
+
+        function runFullDemo() {
+            runCalculatorDemo();
+            setTimeout(() => {
+                runStringUtilsDemo();
+            }, 8000);
+        }
+
+        // Initialize with default calculation
+        window.addEventListener('load', () => {
+            calculate();
+            document.getElementById('string-input').value = 'TDD Sample';
+            processString();
+        });
+    </script>
+</body>
+</html>
