@@ -139,6 +139,35 @@ REFACTORフェーズ: コードの品質を改善してください
 - "Run workflow" で手動実行可能
 - アクションタイプを選択（test, tdd-red, tdd-green, etc.）
 
+## ⚡ Issue作成後の実行方法
+
+**重要**: Issue作成だけでは自動実行されません。以下の方法で手動実行が必要です：
+
+### 1. Claude Code Actions実行（推奨）
+```
+1. GitHubでIssueを作成
+2. Claude Code Actionsを開く  
+3. Issue内の指示をコピペして実行
+4. 結果をIssueに報告
+```
+
+### 2. GitHub Actions手動実行
+```
+1. リポジトリ → Actionsタブ
+2. "Claude Code Actions TDD Support"選択
+3. "Run workflow"でアクションタイプを選択
+4. 実行ログを確認
+```
+
+### 3. ローカル実行
+```bash
+git clone [リポジトリURL]
+npm install
+npm run tdd:cycle  # または他のTDDコマンド
+```
+
+詳細は `docs/issue-execution-workflow.md` を参照してください。
+
 ## 📈 カバレッジ
 
 テストカバレッジは `npm run test:coverage` で確認できます。カバレッジレポートは `coverage/` ディレクトリに生成されます。
