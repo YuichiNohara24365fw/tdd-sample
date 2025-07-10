@@ -124,31 +124,36 @@ jobs:
       with:
         script: |
           const instruction = '${{ steps.extract.outputs.instruction }}';
+          const actionType = '${{ needs.check-claude-trigger.outputs.action_type }}';
+          const actor = '${{ github.actor }}';
+          
           let results = '';
           let title = '';
           
           switch(instruction) {
             case 'test':
-              results = `${{ steps.execute.outputs.TEST_RESULTS }}`;
+              results = '${{ steps.execute.outputs.TEST_RESULTS }}';
               title = '🧪 テスト実行結果';
               break;
             case 'coverage':
-              results = `${{ steps.execute.outputs.COVERAGE_RESULTS }}`;
+              results = '${{ steps.execute.outputs.COVERAGE_RESULTS }}';
               title = '📊 カバレッジ分析結果';
               break;
             case 'lint':
-              results = `${{ steps.execute.outputs.LINT_RESULTS }}`;
+              results = '${{ steps.execute.outputs.LINT_RESULTS }}';
               title = '🔍 リンター結果';
               break;
             case 'tdd':
-              results = `${{ steps.execute.outputs.TDD_RESULTS }}`;
+              results = '${{ steps.execute.outputs.TDD_RESULTS }}';
               title = '🔄 TDDサイクル実行結果';
               break;
           }
           
+          const status = results.includes('FAIL') || results.includes('error') ? '❌ エラーあり' : '✅ 正常完了';
+          
           const comment = `## ${title}
 
-**実行トリガー**: ${{ needs.check-claude-trigger.outputs.action_type }}
+**実行トリガー**: ${actionType}
 **実行時刻**: ${new Date().toISOString()}
 
 ### 📋 実行結果
@@ -159,8 +164,8 @@ ${results}
 
 ### 🎯 サマリー
 - **ワークフロー**: GitHub Actions経由で実行
-- **ステータス**: ${results.includes('FAIL') || results.includes('error') ? '❌ エラーあり' : '✅ 正常完了'}
-- **実行者**: @${{ github.actor }}
+- **ステータス**: ${status}
+- **実行者**: @${actor}
 
 ---
 *🤖 この結果は Claude Code Actions Integration により自動生成されました*`;
