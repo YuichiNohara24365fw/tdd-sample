@@ -1,0 +1,23 @@
+name: Claude Simple Action
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  claude:
+    runs-on: ubuntu-latest
+    if: contains(github.event.comment.body, '@claude')
+    
+    steps:
+    - uses: anthropics/claude-code-action@beta
+      with:
+        anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        # Claude 4 Opus（最も高性能）をデフォルトに設定
+        model: "claude-opus-4-20250514"

@@ -1,72 +1,50 @@
-name: Claude Code Actions - Official
+name: Claude Code Actions
 
 on:
   issue_comment:
     types: [created]
-  pull_request:
-    types: [opened, synchronize]
+  pull_request_comment:
+    types: [created]
+  issues:
+    types: [opened, assigned]
 
 permissions:
   contents: write
   pull-requests: write
   issues: write
   actions: read
-  id-token: write
 
 jobs:
-  claude-code:
-    name: "🤖 Claude Code Actions"
+  claude-response:
     runs-on: ubuntu-latest
+    name: "Claude AI Assistant"
     if: |
-      contains(github.event.comment.body, '@claude') ||
-      contains(github.event.issue.title, '[CLAUDE]') ||
-      contains(github.event.pull_request.title, '[CLAUDE]') ||
-      github.event.issue.user.login == github.repository_owner
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'issues' && contains(github.event.issue.title, '[CLAUDE]'))
     
     steps:
-    - name: Checkout code
+    - name: Checkout repository
       uses: actions/checkout@v4
       with:
+        # フルヒストリーを取得（コード分析のため）
         fetch-depth: 0
-
-    - name: Run Claude Code Action
+        
+    - name: Claude Code Assistant
       uses: anthropics/claude-code-action@beta
       with:
-        # Max plan で Claude Opus 4 と Sonnet 4 の自動切り替え
+        # 認証設定（Maxプラン）
+        anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        
+        # Claude 4 モデル設定（2025年5月リリース）
         model: "claude-opus-4-20250514"
         fallback_model: "claude-sonnet-4-20250514"
-        anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-        
-        # GitHub token を明示的に指定
-        github_token: ${{ secrets.GITHUB_TOKEN }}
         
         # トリガー設定
         trigger_phrase: "@claude"
         
-        # タイムアウト設定（Max plan なので長時間処理可能）
-        timeout_minutes: "60"
+        # タイムアウト設定（Maxプランで長時間処理対応）
+        timeout_minutes: 60
         
-        # プロジェクト固有の指示（正しいパラメータ名）
-        custom_instructions: |
-          You are working on a Node.js TDD project with:
-          - ES6 modules
-          - Jest testing framework  
-          - ESLint for code quality
-          - 100% test coverage requirement
-          - Existing classes: Calculator, StringUtils
-          
-          Always:
-          1. Generate appropriate tests for any code you create
-          2. Follow existing code patterns and style
-          3. Ensure all tests pass
-          4. Provide clear explanations of changes
-          5. Use natural language understanding (no keyword restrictions)
-          
-          Project structure:
-          - src/ - implementation code
-          - tests/ - test files
-          - Use ESM imports/exports
-          
-        # 環境変数（正しいパラメータ名）
-        claude_env: |
-          NODE_ENV=test
+        # プロジェクト固有の設定はCLAUDE.mdファイルで定義
