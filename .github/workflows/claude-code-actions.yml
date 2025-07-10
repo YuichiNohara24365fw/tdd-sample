@@ -46,5 +46,8 @@ jobs:
         
         # タイムアウト設定（長時間処理対応 - 実験的最大値）
         timeout_minutes: 180
-        
+
+       # 👈 この行を追加
+        allowed-tools: 'npm,npx,node,playwright,chrome,firefox,xvfb-run,apt-get,dpkg'
+
         # プロジェクト固有の設定はCLAUDE.mdファイルで定義
