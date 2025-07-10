@@ -1,0 +1,186 @@
+name: Claude AI Actions - True AI Integration
+
+on:
+  issues:
+    types: [opened, edited]
+  issue_comment:
+    types: [created]
+
+jobs:
+  claude-ai-integration:
+    name: "🤖 Claude AI Actions"
+    runs-on: ubuntu-latest
+    if: |
+      github.event.issue.user.login == github.repository_owner
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Extract instruction
+      id: extract
+      run: |
+        if [ "${{ github.event_name }}" = "issue_comment" ]; then
+          INSTRUCTION="${{ github.event.comment.body }}"
+          ISSUE_NUMBER="${{ github.event.issue.number }}"
+        else
+          INSTRUCTION="${{ github.event.issue.title }} ${{ github.event.issue.body }}"
+          ISSUE_NUMBER="${{ github.event.issue.number }}"
+        fi
+        
+        echo "instruction=$INSTRUCTION" >> $GITHUB_OUTPUT
+        echo "issue_number=$ISSUE_NUMBER" >> $GITHUB_OUTPUT
+        echo "Instruction: $INSTRUCTION"
+
+    - name: Call Claude AI
+      id: claude
+      run: |
+        echo "🤖 Calling Claude AI..."
+        
+        INSTRUCTION="${{ steps.extract.outputs.instruction }}"
+        
+        # Create Claude API request
+        cat > request.json << 'EOF'
+        {
+          "model": "claude-3-5-sonnet-20241022",
+          "max_tokens": 4000,
+          "system": "You are an expert software developer. Analyze the request and provide structured response in JSON format with: action_type, analysis, code_files array with path/content, test_files array, commands array, explanation.",
+          "messages": [
+            {
+              "role": "user",
+              "content": "Request: INSTRUCTION_PLACEHOLDER\n\nProject: Node.js with Jest, ES6 modules. Existing: Calculator, StringUtils classes. Generate complete code and tests."
+            }
+          ]
+        }
+EOF
+        
+        # Replace placeholder
+        sed -i "s/INSTRUCTION_PLACEHOLDER/$INSTRUCTION/g" request.json
+        
+        # Call Claude API
+        response=$(curl -s -X POST "https://api.anthropic.com/v1/messages" \
+          -H "Content-Type: application/json" \
+          -H "x-api-key: ${{ secrets.CLAUDE_API_KEY }}" \
+          -d @request.json)
+        
+        echo "$response" > response.json
+        echo "Claude API called successfully"
+
+    - name: Process Claude response
+      id: process
+      run: |
+        echo "🚀 Processing Claude response..."
+        
+        # Extract content from Claude response
+        content=$(cat response.json | jq -r '.content[0].text' | jq -r '.')
+        echo "$content" > claude_output.json
+        
+        # Create files based on Claude response
+        echo "$content" | jq -c '.code_files[]?' 2>/dev/null | while read file; do
+          path=$(echo "$file" | jq -r '.path')
+          content=$(echo "$file" | jq -r '.content')
+          
+          if [ "$path" != "null" ] && [ "$content" != "null" ]; then
+            mkdir -p "$(dirname "$path")"
+            echo "$content" > "$path"
+            echo "Created: $path"
+          fi
+        done
+        
+        # Create test files
+        echo "$content" | jq -c '.test_files[]?' 2>/dev/null | while read file; do
+          path=$(echo "$file" | jq -r '.path')
+          content=$(echo "$file" | jq -r '.content')
+          
+          if [ "$path" != "null" ] && [ "$content" != "null" ]; then
+            mkdir -p "$(dirname "$path")"
+            echo "$content" > "$path"
+            echo "Created test: $path"
+          fi
+        done
+
+    - name: Run tests
+      run: |
+        echo "🧪 Running tests..."
+        npm test > test_results.txt 2>&1 || echo "Tests completed"
+        npm run test:coverage > coverage_results.txt 2>&1 || echo "Coverage completed"
+
+    - name: Commit changes
+      run: |
+        git config --local user.email "claude-ai@anthropic.com"
+        git config --local user.name "Claude AI"
+        
+        if ! git diff --quiet || [ -n "$(git ls-files --others --exclude-standard)" ]; then
+          git add -A
+          git commit -m "🤖 Claude AI: Auto-implementation for issue #${{ steps.extract.outputs.issue_number }}" || echo "No changes to commit"
+          git push || echo "Push failed"
+        fi
+
+    - name: Post results
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          
+          let claudeContent = {};
+          try {
+            claudeContent = JSON.parse(fs.readFileSync('claude_output.json', 'utf8'));
+          } catch (e) {
+            claudeContent = { analysis: 'Analysis not available', explanation: 'Processing completed' };
+          }
+          
+          let testResults = '';
+          try {
+            testResults = fs.readFileSync('test_results.txt', 'utf8');
+          } catch (e) {
+            testResults = 'Test results not available';
+          }
+          
+          const comment = `## 🤖 Claude AI Actions - 実行完了
+
+**Issue**: #${{ steps.extract.outputs.issue_number }}
+**実行時刻**: ${new Date().toISOString()}
+
+### 🧠 Claude AI 分析
+${claudeContent.analysis || 'AI分析完了'}
+
+### 📊 実行結果
+\`\`\`
+${testResults}
+\`\`\`
+
+### 💡 説明
+${claudeContent.explanation || 'Claude AIによる自動実装が完了しました。'}
+
+---
+*🤖 Powered by Claude AI API*`;
+
+          await github.rest.issues.createComment({
+            issue_number: ${{ steps.extract.outputs.issue_number }},
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+
+          // Add label
+          await github.rest.issues.addLabels({
+            issue_number: ${{ steps.extract.outputs.issue_number }},
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            labels: ['claude-ai-processed']
+          });

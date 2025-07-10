@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code Actions TDD プロジェクト説明資料</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            padding: 40px 0;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.3em;
+            opacity: 0.9;
+        }
+
+        .section {
+            background: white;
+            margin: 30px 0;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .section h2 {
+            color: #2c3e50;
+            font-size: 2.2em;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #3498db;
+        }
+
+        .section h3 {
+            color: #34495e;
+            font-size: 1.5em;
+            margin: 25px 0 15px 0;
+        }
+
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+
+        .benefit-card {
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .benefit-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .benefit-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .workflow-steps {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 40px 0;
+            flex-wrap: wrap;
+        }
+
+        .step {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            flex: 1;
+            margin: 10px;
+            min-width: 200px;
+            transition: all 0.3s ease;
+        }
+
+        .step:hover {
+            border-color: #3498db;
+            transform: scale(1.05);
+        }
+
+        .step-number {
+            background: #3498db;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .arrow {
+            font-size: 2em;
+            color: #3498db;
+            margin: 0 10px;
+        }
+
+        .code-example {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 20px 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            border-left: 5px solid #3498db;
+        }
+
+        .code-example .title {
+            color: #81c784;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .feature-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #e74c3c;
+        }
+
+        .feature-item.test { border-left-color: #e74c3c; }
+        .feature-item.review { border-left-color: #f39c12; }
+        .feature-item.refactor { border-left-color: #27ae60; }
+        .feature-item.generate { border-left-color: #3498db; }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .metric {
+            background: linear-gradient(135deg, #00b894, #00a085);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .tdd-cycle {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 40px 0;
+            flex-wrap: wrap;
+        }
+
+        .tdd-phase {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            margin: 20px;
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+
+        .tdd-phase:hover {
+            transform: scale(1.1);
+        }
+
+        .red { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+        .green { background: linear-gradient(135deg, #27ae60, #229954); }
+        .blue { background: linear-gradient(135deg, #3498db, #2980b9); }
+
+        .tdd-phase .phase-emoji {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .github-integration {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 10px;
+            margin: 30px 0;
+        }
+
+        .integration-flow {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+
+        .flow-item {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+            flex: 1;
+            margin: 10px;
+            min-width: 150px;
+        }
+
+        .cta {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            margin: 40px 0;
+        }
+
+        .cta h3 {
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            background: #3498db;
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 25px;
+            display: inline-block;
+            margin: 10px;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #3498db;
+            color: white;
+            font-weight: bold;
+        }
+
+        .highlight {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .success-badge {
+            background: #27ae60;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 { font-size: 2em; }
+            .section { padding: 20px; }
+            .workflow-steps { flex-direction: column; }
+            .arrow { display: none; }
+            .tdd-cycle { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- ヘッダー -->
+        <div class="header">
+            <h1>🤖 Claude Code Actions風TDDシステム</h1>
+            <p>GitHub ActionsとAI指示による開発プロセス自動化</p>
+        </div>
+
+        <!-- 概要セクション -->
+        <div class="section">
+            <h2>🎯 プロジェクト概要</h2>
+            <p style="font-size: 1.2em; margin-bottom: 20px;">
+                GitHub ActionsとClaude Code（AI）からの指示を組み合わせることで、開発プロセスの大部分を自動化し、
+                <strong>効率的なテスト駆動開発（TDD）</strong>を実現するプロジェクトです。
+            </p>
+            
+            <div class="highlight">
+                <strong>⚠️ 重要な区別:</strong>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li><strong>AI部分:</strong> Claude Codeによる指示・要求の解釈と戦略立案</li>
+                    <li><strong>自動化部分:</strong> GitHub Actionsによる定型処理の実行</li>
+                    <li><strong>手動部分:</strong> 複雑なコード生成や設計判断</li>
+                </ul>
+            </div>
+            
+            <div class="metrics">
+                <div class="metric">
+                    <div class="metric-value">100%</div>
+                    <div>テストカバレッジ</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">31</div>
+                    <div>テストケース</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">0.5秒</div>
+                    <div>テスト実行時間</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">5</div>
+                    <div>自動アクション</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 利便性向上のメリット -->
+        <div class="section">
+            <h2>✨ 利便性向上の具体的メリット</h2>
+            
+            <div class="benefits-grid">
+                <div class="benefit-card">
+                    <div class="benefit-icon">⚡</div>
+                    <h3>定型作業の自動化</h3>
+                    <p>テスト実行・リント・カバレッジ分析<br>GitHub Actionsによる自動実行</p>
+                </div>
+                <div class="benefit-card">
+                    <div class="benefit-icon">🔄</div>
+                    <h3>TDDプロセス支援</h3>
+                    <p>定型的なTDDサイクル実行<br>Claude Codeとの連携で効率化</p>
+                </div>
+                <div class="benefit-card">
+                    <div class="benefit-icon">🤝</div>
+                    <h3>チーム標準化</h3>
+                    <p>統一されたコマンド体系<br>予測可能な実行結果</p>
+                </div>
+                <div class="benefit-card">
+                    <div class="benefit-icon">📊</div>
+                    <h3>品質の可視化</h3>
+                    <p>自動生成される品質レポート<br>GitHub上での透明性確保</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TDDサイクル支援 -->
+        <div class="section">
+            <h2>🔄 TDDサイクルの支援システム</h2>
+            
+            <div class="tdd-cycle">
+                <div class="tdd-phase red">
+                    <div class="phase-emoji">🔴</div>
+                    <div>RED</div>
+                    <div style="font-size: 0.8em;">失敗するテスト作成</div>
+                </div>
+                <div class="arrow">→</div>
+                <div class="tdd-phase green">
+                    <div class="phase-emoji">🟢</div>
+                    <div>GREEN</div>
+                    <div style="font-size: 0.8em;">最小実装でテスト成功</div>
+                </div>
+                <div class="arrow">→</div>
+                <div class="tdd-phase blue">
+                    <div class="phase-emoji">🔵</div>
+                    <div>REFACTOR</div>
+                    <div style="font-size: 0.8em;">コード品質改善</div>
+                </div>
+            </div>
+
+            <div class="highlight">
+                <strong>🎯 実現方法の詳細:</strong>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li><strong>🤖 AI部分:</strong> Claude Codeが具体的なテストケースやコード実装を提案</li>
+                    <li><strong>⚙️ 自動化部分:</strong> GitHub Actionsが定型的なテスト実行・レポート生成を実行</li>
+                    <li><strong>👤 手動部分:</strong> 開発者がAI提案を確認・採用・調整</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 実行可能なアクション -->
+        <div class="section">
+            <h2>🛠️ 実行可能なアクション一覧</h2>
+            
+            <div class="feature-grid">
+                <div class="feature-item test">
+                    <h3>🧪 テスト実行 <span style="font-size:0.8em; color:#666;">(自動化)</span></h3>
+                    <p><strong>トリガー:</strong> [CLAUDE] テスト実行</p>
+                    <p>npm test, カバレッジ分析, レポート生成を定型実行</p>
+                </div>
+                <div class="feature-item review">
+                    <h3>👁️ コードレビュー <span style="font-size:0.8em; color:#666;">(自動化)</span></h3>
+                    <p><strong>トリガー:</strong> [REVIEW] レビュー依頼</p>
+                    <p>ESLint実行, 品質メトリクス測定, 定型レポート生成</p>
+                </div>
+                <div class="feature-item refactor">
+                    <h3>🔧 リファクタリング <span style="font-size:0.8em; color:#e74c3c;">(AI支援)</span></h3>
+                    <p><strong>トリガー:</strong> [REFACTOR] 改善依頼</p>
+                    <p>Claude Codeが改善提案、開発者が実装・確認</p>
+                </div>
+                <div class="feature-item generate">
+                    <h3>🏗️ コード生成 <span style="font-size:0.8em; color:#e74c3c;">(AI支援)</span></h3>
+                    <p><strong>トリガー:</strong> [CLAUDE] 新機能追加</p>
+                    <p>Claude Codeが設計・実装提案、開発者が採用・調整</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 実践的な使用例 -->
+        <div class="section">
+            <h2>💡 実践的な使用例</h2>
+
+            <h3>📝 基本的なテスト実行</h3>
+            <div class="code-example">
+                <div class="title">GitHub Issue作成例:</div>
+タイトル: [CLAUDE] カバレッジテスト実行
+本文: 全テストとカバレッジレポートを実行してください
+
+→ 自動実行: npm test, npm run test:coverage (GitHub Actions)
+→ 結果: 定型レポートをIssueにコメント
+            </div>
+
+            <h3>🔄 TDD新機能実装</h3>
+            <div class="code-example">
+                <div class="title">完全TDDサイクル実行:</div>
+タイトル: [CLAUDE] TDD新機能実装
+本文:
+ArrayUtilsクラスを以下の仕様でTDD実装してください：
+- unique(array): 重複要素除去
+- sum(array): 配列要素合計  
+- average(array): 平均値計算
+
+TDDサイクル（Red→Green→Refactor）で実装してください。
+
+→ AI支援実行: 
+  1. Claude Codeが失敗するテストコードを提案 (Red)
+  2. Claude Codeが最小実装コードを提案 (Green)
+  3. Claude Codeがリファクタリング案を提案 (Refactor)
+  ※ 開発者が各段階で提案を確認・実装
+            </div>
+
+            <h3>🔒 セキュリティレビュー</h3>
+            <div class="code-example">
+                <div class="title">包括的レビュー実行:</div>
+タイトル: [REVIEW] セキュリティチェック
+本文:
+プロジェクト全体をセキュリティ観点でレビューしてください：
+- 脆弱性スキャン
+- エラーハンドリング確認  
+- 入力値検証のチェック
+
+→ 自動実行: ESLint、定型品質チェック (GitHub Actions)
+→ AI支援: Claude Codeがセキュリティ観点での改善提案を生成
+→ 結果: 定型レポート + AI による改善提案
+            </div>
+        </div>
+
+        <!-- GitHub統合 -->
+        <div class="section">
+            <h2>🔗 GitHub統合の詳細</h2>
+            
+            <div class="github-integration">
+                <h3>🎯 統合フロー</h3>
+                <div class="integration-flow">
+                    <div class="flow-item">
+                        <strong>1. Issue作成</strong><br>
+                        [CLAUDE] キーワードで指示
+                    </div>
+                    <div class="arrow">→</div>
+                    <div class="flow-item">
+                        <strong>2. 自動検知</strong><br>
+                        GitHub Actions起動
+                    </div>
+                    <div class="arrow">→</div>
+                    <div class="flow-item">
+                        <strong>3. 処理実行</strong><br>
+                        GitHub Actions + AI支援
+                    </div>
+                    <div class="arrow">→</div>
+                    <div class="flow-item">
+                        <strong>4. 結果報告</strong><br>
+                        詳細レポートを自動コメント
+                    </div>
+                </div>
+            </div>
+
+            <h3>📊 対応するGitHub機能</h3>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>GitHub機能</th>
+                            <th>Claude連携</th>
+                            <th>自動実行内容</th>
+                            <th>出力結果</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Issues</strong></td>
+                            <td>キーワード検知</td>
+                            <td>定型処理実行 + AI支援提案</td>
+                            <td>実行結果 + AI提案レポート</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Pull Requests</strong></td>
+                            <td>自動トリガー</td>
+                            <td>定型品質チェック・テスト実行</td>
+                            <td>品質レポート (手動判定必要)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Actions</strong></td>
+                            <td>ワークフロー実行</td>
+                            <td>npm scripts, bashコマンド実行</td>
+                            <td>実行ログ・成果物</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Projects</strong></td>
+                            <td>進捗管理</td>
+                            <td>自動ステータス更新</td>
+                            <td>カンバンボード連携</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- AI vs 自動化の明確な区別 -->
+        <div class="section">
+            <h2>🤖 AIと自動化の役割分担</h2>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin: 30px 0;">
+                <div style="background: #e8f4fd; padding: 25px; border-radius: 10px; border-left: 5px solid #3498db;">
+                    <h3 style="color: #2980b9; margin-bottom: 20px;">🤖 AI（Claude Code）の役割</h3>
+                    <ul style="padding-left: 20px;">
+                        <li><strong>要求分析:</strong> Issue内容の理解・解釈</li>
+                        <li><strong>設計提案:</strong> アーキテクチャ・パターンの提案</li>
+                        <li><strong>コード生成:</strong> テストコード・実装コードの作成</li>
+                        <li><strong>改善提案:</strong> リファクタリング・最適化案</li>
+                        <li><strong>レビュー:</strong> セキュリティ・品質観点での分析</li>
+                        <li><strong>ドキュメント:</strong> コメント・説明の生成</li>
+                    </ul>
+                    <div style="margin-top: 15px; padding: 10px; background: rgba(52,152,219,0.1); border-radius: 5px;">
+                        <strong>実行方法:</strong> 開発者がClaude Codeと対話して実行
+                    </div>
+                </div>
+                
+                <div style="background: #f8f9fa; padding: 25px; border-radius: 10px; border-left: 5px solid #6c757d;">
+                    <h3 style="color: #495057; margin-bottom: 20px;">⚙️ 自動化（GitHub Actions）の役割</h3>
+                    <ul style="padding-left: 20px;">
+                        <li><strong>テスト実行:</strong> npm test, jest の実行</li>
+                        <li><strong>カバレッジ分析:</strong> テストカバレッジ測定</li>
+                        <li><strong>リント実行:</strong> ESLint による品質チェック</li>
+                        <li><strong>ビルド実行:</strong> アプリケーションビルド</li>
+                        <li><strong>レポート生成:</strong> 定型フォーマットでの結果出力</li>
+                        <li><strong>通知送信:</strong> GitHub API経由でのコメント投稿</li>
+                    </ul>
+                    <div style="margin-top: 15px; padding: 10px; background: rgba(108,117,125,0.1); border-radius: 5px;">
+                        <strong>実行方法:</strong> Issue作成で自動トリガー
+                    </div>
+                </div>
+            </div>
+            
+            <div class="highlight">
+                <strong>🎯 協力関係:</strong>
+                Claude Code（AI）が戦略・設計・コード提案を行い、GitHub Actions（自動化）が定型的な実行・検証・レポーティングを担当。
+                開発者は両者の結果を統合して最終的な実装を決定します。
+            </div>
+        </div>
+
+        <!-- 設定とセットアップ -->
+        <div class="section">
+            <h2>⚙️ 設定方法とトリガー仕様</h2>
+            
+            <h3>🔧 必要な設定ファイル</h3>
+            <div class="workflow-steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h4>GitHub Workflow</h4>
+                    <p>.github/workflows/<br>claude-universal.yml</p>
+                </div>
+                <div class="arrow">→</div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h4>Claude設定</h4>
+                    <p>CLAUDE.md<br>プロジェクト設定</p>
+                </div>
+                <div class="arrow">→</div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h4>package.json</h4>
+                    <p>NPMスクリプト<br>Jest設定</p>
+                </div>
+                <div class="arrow">→</div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <h4>実行準備完了</h4>
+                    <p>Issue作成で<br>即座に実行</p>
+                </div>
+            </div>
+
+            <h3>🎯 トリガーキーワード一覧</h3>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>アクションタイプ</th>
+                            <th>トリガーキーワード</th>
+                            <th>自動判別例</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="success-badge">テスト実行</span></td>
+                            <td>テスト, test, TDD</td>
+                            <td>[CLAUDE] テスト実行</td>
+                        </tr>
+                        <tr>
+                            <td><span class="success-badge">コードレビュー</span></td>
+                            <td>review, レビュー, チェック, 分析</td>
+                            <td>[REVIEW] セキュリティチェック</td>
+                        </tr>
+                        <tr>
+                            <td><span class="success-badge">リファクタリング</span></td>
+                            <td>refactor, リファクタ, 改善, 最適化</td>
+                            <td>[REFACTOR] パフォーマンス改善</td>
+                        </tr>
+                        <tr>
+                            <td><span class="success-badge">コード生成</span></td>
+                            <td>新しいクラス, new class, メソッド追加</td>
+                            <td>[CLAUDE] ArrayUtils作成</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- セキュリティと運用 -->
+        <div class="section">
+            <h2>🔒 セキュリティとスケーラビリティ</h2>
+
+            <h3>🛡️ セキュリティ考慮事項</h3>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <h4>🔐 権限管理</h4>
+                    <p>最小権限の原則に基づく設定<br>contents/issues/pull-requests のみ</p>
+                </div>
+                <div class="feature-item">
+                    <h4>🔍 監査ログ</h4>
+                    <p>全実行履歴をGitHubに記録<br>コンプライアンス対応</p>
+                </div>
+                <div class="feature-item">
+                    <h4>🚫 機密情報保護</h4>
+                    <p>APIキーは環境変数で管理<br>コード内に機密情報を含めない</p>
+                </div>
+                <div class="feature-item">
+                    <h4>⚡ パフォーマンス最適化</h4>
+                    <p>並行処理とキャッシュ活用<br>実行時間制限の設定</p>
+                </div>
+            </div>
+
+            <h3>📈 スケーラビリティ対応</h3>
+            <div class="highlight">
+                <strong>🎯 大規模プロジェクト対応:</strong>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li>並行テスト実行（複数環境対応）</li>
+                    <li>条件付き実行（変更ファイルベース）</li>
+                    <li>キャッシュ戦略（依存関係・ビルド結果）</li>
+                    <li>リソース最適化（実行時間制限）</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- ベストプラクティス -->
+        <div class="section">
+            <h2>🎯 ベストプラクティス</h2>
+
+            <div class="workflow-steps">
+                <div class="step">
+                    <div class="step-number">💡</div>
+                    <h4>効果的な指示</h4>
+                    <p>明確な目的・適切なキーワード・具体的な対象指定</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">📊</div>
+                    <h4>継続的改善</h4>
+                    <p>定期実行・履歴追跡・チーム共有</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">🔒</div>
+                    <h4>セキュリティ</h4>
+                    <p>権限設定・機密情報保護・脆弱性スキャン</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">🚀</div>
+                    <h4>品質向上</h4>
+                    <p>自動化・標準化・可視化</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 今すぐ始める -->
+        <div class="cta">
+            <h3>🚀 今すぐClaude Code風TDDシステムを体験しよう！</h3>
+            <p style="font-size: 1.2em; margin-bottom: 30px;">
+                AI支援 + 自動化によるハイブリッド開発を体験できます
+            </p>
+            <div>
+                <a href="claude-code-actions-complete-guide.md" class="btn">📖 完全ガイド</a>
+                <a href="tdd-with-claude-guide.md" class="btn">🔄 TDD実現ガイド</a>
+                <a href="github-integration-guide.md" class="btn">🔗 GitHub統合ガイド</a>
+            </div>
+            <div style="margin-top: 30px; font-size: 1.1em;">
+                <strong>最初のステップ:</strong> 
+                <ol style="text-align: left; max-width: 600px; margin: 20px auto; padding-left: 20px;">
+                    <li>GitHubで新しいIssueを作成</li>
+                    <li><code style="background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 5px;">[CLAUDE] テスト実行</code> と入力</li>
+                    <li>GitHub Actionsが自動でテスト・カバレッジを実行</li>
+                    <li>必要に応じてClaude Codeでコード改善を相談</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- フッター -->
+        <div style="text-align: center; color: white; padding: 40px 0; margin-top: 40px;">
+            <p style="font-size: 1.1em;">
+                🤖 <strong>AI支援 + 自動化</strong> で開発効率を革新しよう！
+            </p>
+            <p style="opacity: 0.8; margin-top: 10px;">
+                Claude Code (AI) × GitHub Actions (自動化) × TDD = ハイブリッド開発体験
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // 簡単なアニメーション効果
+        document.addEventListener('DOMContentLoaded', function() {
+            const sections = document.querySelectorAll('.section');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            });
+
+            sections.forEach(section => {
+                observer.observe(section);
+            });
+
+            // TDDサイクルのインタラクティブ効果
+            const tddPhases = document.querySelectorAll('.tdd-phase');
+            tddPhases.forEach(phase => {
+                phase.addEventListener('click', () => {
+                    phase.style.transform = 'scale(1.2)';
+                    setTimeout(() => {
+                        phase.style.transform = 'scale(1)';
+                    }, 200);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
