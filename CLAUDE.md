@@ -128,7 +128,7 @@ tdd-sample-project/
 │   └── index.test.js        # index.js のテスト
 ├── .github/workflows/       # GitHub Actions設定
 │   ├── ci.yml               # 基本的なCI/CD
-│   └── claude-ai-actions.yml # Claude AI API統合
+│   └── claude-code-actions.yml # 公式Claude Code Actions
 ├── docs/                    # ドキュメント
 │   ├── claude-code-actions-complete-guide.md
 │   ├── tdd-with-claude-guide.md

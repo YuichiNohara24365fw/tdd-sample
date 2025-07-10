@@ -103,9 +103,11 @@ JWTトークンを使ってセキュアにしてください。
 テストも一緒に修正してください。
 ```
 
-### 🔧 セットアップ
-Claude AI Actionsを使用するには、Claude APIキーの設定が必要です：
-- 🚀 **[Claude AI セットアップガイド](docs/claude-ai-setup-guide.md)** - API統合の詳細手順
+### 🔧 セットアップ（2025年最新版）
+**公式Claude Code Actions** を使用するには、Claude APIキーの設定が必要です：
+- 🚀 **[Claude Code Actions セットアップガイド](docs/claude-ai-setup-guide.md)** - Claude Opus 4/Sonnet 4 統合の詳細手順
+
+**⚡ 即座にテスト可能:** Issue #9 に `@claude ArrayUtilsクラスを作ってください` とコメントするだけ！
 
 ### 📚 詳細ガイド
 - 📖 [Claude Code Actions完全ガイド](docs/claude-code-actions-complete-guide.md)
